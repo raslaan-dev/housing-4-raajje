@@ -126,24 +126,25 @@ export async function signLease(leaseId: string, role: 'CLIENT' | 'OWNER', signe
   const reference = lease.reference ?? lease.id;
   const label = branchLabel(lease.property.branch);
 
-  await prisma.$transaction(async (tx) => {
-    const existing = await tx.leaseSignature.findFirst({ where: { leaseId, role } });
-    if (existing) {
-      await tx.leaseSignature.update({ where: { id: existing.id }, data: { signedAt: now, status: 'SIGNED', signerId } });
-    } else {
-      await tx.leaseSignature.create({ data: { leaseId, role, signerId, signedAt: now, status: 'SIGNED' } });
-    }
-    await tx.lease.update({
+  // D1 only supports batched (not interactive) transactions, so read first, then write in one batch.
+  const existing = await prisma.leaseSignature.findFirst({ where: { leaseId, role } });
+  await prisma.$transaction([
+    existing
+      ? prisma.leaseSignature.update({ where: { id: existing.id }, data: { signedAt: now, status: 'SIGNED', signerId } })
+      : prisma.leaseSignature.create({ data: { leaseId, role, signerId, signedAt: now, status: 'SIGNED' } }),
+    prisma.lease.update({
       where: { id: leaseId },
       data: { clientSigned, ownerSigned, ...(activate ? { status: 'ACTIVE', executedAt: now } : {}) }
-    });
-    if (activate) {
-      await tx.property.update({ where: { id: lease.propertyId }, data: { status: 'RENTED' } });
-      await tx.propertyStatusHistory.create({
-        data: { propertyId: lease.propertyId, status: 'RENTED', reason: `Lease ${reference} activated`, changedBy: signerId }
-      });
-    }
-  });
+    }),
+    ...(activate
+      ? [
+          prisma.property.update({ where: { id: lease.propertyId }, data: { status: 'RENTED' } }),
+          prisma.propertyStatusHistory.create({
+            data: { propertyId: lease.propertyId, status: 'RENTED', reason: `Lease ${reference} activated`, changedBy: signerId }
+          })
+        ]
+      : [])
+  ]);
 
   await audit(signerId, `lease.signed.${role.toLowerCase()}`, 'Lease', leaseId, `${role === 'CLIENT' ? 'Client' : 'Owner'} signed lease ${reference}`, label);
   if (activate) {

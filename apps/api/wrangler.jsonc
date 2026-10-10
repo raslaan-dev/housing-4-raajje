@@ -1,0 +1,38 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Production API. Not public: the website Worker reaches it through a service binding.
+  "name": "housing-4-raajje-api",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-10-04",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "housing-4-raajje-db",
+      "database_id": "c19cf9db-230a-4476-95b4-81d31e0b0efa",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  },
+  "env": {
+    // Deployed from the preview branch, with its own database.
+    "preview": {
+      "name": "housing-4-raajje-api-preview",
+      "workers_dev": false,
+      "preview_urls": false,
+      "vars": { "NODE_ENV": "preview" },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "housing-4-raajje-db-preview",
+          "database_id": "71748263-7762-4f82-a351-2346cc5accfc",
+          "migrations_dir": "migrations"
+        }
+      ]
+    }
+  }
+}
