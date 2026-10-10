@@ -5,12 +5,20 @@
   "compatibility_date": "2026-10-04",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
-  "preview_urls": true,
   "assets": {
     "directory": ".svelte-kit/cloudflare",
     "binding": "ASSETS"
   },
+  // /api/* is forwarded to the API Worker (see src/hooks.server.ts).
+  "services": [{ "binding": "API", "service": "housing-4-raajje-api" }],
   "observability": {
     "enabled": true
+  },
+  "env": {
+    "preview": {
+      "name": "housing-4-raajje-preview",
+      "workers_dev": true,
+      "services": [{ "binding": "API", "service": "housing-4-raajje-api-preview" }]
+    }
   }
 }

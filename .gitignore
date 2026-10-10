@@ -11,3 +11,6 @@ apps/web/.svelte-kit
 apps/web/build
 packages/database/prisma/dev.db
 packages/database/prisma/dev.db-journal
+apps/api/seed.sql
+apps/api/.wrangler
+apps/web/.wrangler

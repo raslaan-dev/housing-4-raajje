@@ -5,11 +5,12 @@
   "scripts": {
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "db:seed:sql": "node scripts/seed-sql.mjs ../../apps/api/seed.sql"
   },
   "dependencies": {
-    "@prisma/client": "^5.21.0",
-    "prisma": "^5.21.0"
+    "@prisma/client": "^6.19.3",
+    "prisma": "^6.19.3"
   },
   "devDependencies": {
     "tsx": "^4.19.2"

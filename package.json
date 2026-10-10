@@ -8,14 +8,15 @@
   "scripts": {
     "dev": "npm run dev --workspaces --if-present",
     "build": "npm run db:generate && npm run build --workspaces --if-present",
-    "deploy": "npm --workspace apps/web run deploy",
-    "deploy:preview": "npm --workspace apps/web run deploy:preview",
+    "deploy": "npm --workspace apps/api run deploy && npm --workspace apps/web run deploy",
+    "deploy:preview": "npm --workspace apps/api run deploy:preview && npm --workspace apps/web run deploy:preview",
     "test": "vitest run",
     "db:generate": "npm --workspace packages/database run db:generate",
     "db:push": "npm --workspace packages/database run db:push",
     "db:seed": "npm --workspace packages/database run db:seed",
     "api:dev": "npm --workspace apps/api run dev",
-    "web:dev": "npm --workspace apps/web run dev"
+    "web:dev": "npm --workspace apps/web run dev",
+    "db:seed:sql": "npm --workspace packages/database run db:seed:sql"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
