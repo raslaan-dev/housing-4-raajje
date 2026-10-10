@@ -7,8 +7,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "dev:worker": "wrangler dev",
-    "deploy": "wrangler d1 migrations apply DB --remote --env=\"\" && wrangler deploy --env=\"\"",
-    "deploy:preview": "wrangler d1 migrations apply DB --remote --env preview && wrangler deploy --env preview"
+    "deploy": "node ../../scripts/wrangler.mjs d1 migrations apply DB --remote --env=\"\" && node ../../scripts/wrangler.mjs deploy --env=\"\"",
+    "deploy:preview": "node ../../scripts/wrangler.mjs d1 migrations apply DB --remote --env preview && node ../../scripts/wrangler.mjs deploy --env preview"
   },
   "dependencies": {
     "@clerk/backend": "^3.22.0",

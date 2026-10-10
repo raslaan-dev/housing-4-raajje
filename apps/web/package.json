@@ -6,8 +6,8 @@
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "wrangler deploy --env=\"\"",
-    "deploy:preview": "wrangler deploy --env preview",
+    "deploy": "node ../../scripts/wrangler.mjs deploy --env=\"\"",
+    "deploy:preview": "node ../../scripts/wrangler.mjs deploy --env preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
