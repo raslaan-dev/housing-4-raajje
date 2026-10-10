@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-04T14:00:00Z",
+  "title": "Design System: Housing_4_Raajje",
+  "extensions": {
+    "colorMeta": {
+      "ink": { "role": "primary", "displayName": "Harbour Ink", "canonical": "#154153", "tonalRamp": ["#000e1e", "#002637", "#144052", "#315b6e", "#537e92", "#79a6bb", "#a2cfe5", "#dcf3fe"] },
+      "ink-soft": { "role": "primary", "displayName": "Soft Ink", "canonical": "#2c5566", "tonalRamp": ["#000e1c", "#002635", "#164050", "#325b6d", "#557e90", "#7ba6b9", "#a3cfe3", "#ddf3fd"] },
+      "sage": { "role": "secondary", "displayName": "Lagoon Sage", "canonical": "#b1cdae", "tonalRamp": ["#001000", "#112810", "#2a4228", "#445d42", "#668063", "#8ca789", "#b4d1b1", "#e5f3e3"] },
+      "sage-wash": { "role": "secondary", "displayName": "Sage Wash", "canonical": "rgba(177, 205, 174, 0.35)" },
+      "moss": { "role": "tertiary", "displayName": "Moss", "canonical": "#71926e", "tonalRamp": ["#001100", "#0b290a", "#254323", "#405f3d", "#61815e", "#87a984", "#b0d3ac", "#e3f5e1"] },
+      "moss-deep": { "role": "tertiary", "displayName": "Deep Moss", "canonical": "#4a6847", "tonalRamp": ["#001100", "#0d290b", "#264324", "#415e3e", "#62815f", "#88a985", "#b1d2ad", "#e3f4e1"] },
+      "paper": { "role": "neutral", "displayName": "Paper", "canonical": "#f7f6f2", "tonalRamp": ["#0c0b09", "#22221f", "#3b3a37", "#565552", "#787774", "#9f9e9b", "#c8c7c3", "#efeeec"] },
+      "sheet": { "role": "neutral", "displayName": "Sheet White", "canonical": "#ffffff", "tonalRamp": ["#0b0b0b", "#222222", "#3a3a3a", "#555555", "#777777", "#9e9e9e", "#c7c7c7", "#eeeeee"] },
+      "mist": { "role": "neutral", "displayName": "Mist", "canonical": "#f1efe9", "tonalRamp": ["#0c0b07", "#23221d", "#3c3a36", "#575550", "#797772", "#a09e99", "#c9c7c1", "#efeeeb"] },
+      "muted": { "role": "neutral", "displayName": "Harbour Grey", "canonical": "#54737e", "tonalRamp": ["#000e17", "#07262f", "#223f49", "#3c5b65", "#5e7d88", "#84a5b0", "#acceda", "#e1f2f8"] },
+      "line": { "role": "neutral", "displayName": "Rule", "canonical": "rgba(21, 65, 83, 0.12)" },
+      "line-soft": { "role": "neutral", "displayName": "Hairline", "canonical": "rgba(21, 65, 83, 0.09)" },
+      "line-strong": { "role": "neutral", "displayName": "Strong Rule", "canonical": "rgba(21, 65, 83, 0.2)" },
+      "ink-tint": { "role": "neutral", "displayName": "Ink Tint", "canonical": "rgba(21, 65, 83, 0.08)" },
+      "on-spine-soft": { "role": "secondary", "displayName": "Spine Text", "canonical": "rgba(177, 205, 174, 0.82)" },
+      "on-spine-faint": { "role": "secondary", "displayName": "Spine Meta", "canonical": "rgba(177, 205, 174, 0.62)" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Public band headline only, max 18ch, paper on ink." },
+      "figure": { "displayName": "Figure", "purpose": "The ruled figure row; 26px under 640px. Positive money in Moss." },
+      "headline": { "displayName": "Headline", "purpose": "Page titles in every portal and on sign-in; 24px under 640px." },
+      "title": { "displayName": "Title", "purpose": "Section titles, sheet titles, listing names and listing rent." },
+      "body": { "displayName": "Body", "purpose": "Base text." },
+      "body-row": { "displayName": "Row", "purpose": "Ledger rows, inputs, notices, key/value lists, ledes." },
+      "caption": { "displayName": "Caption", "purpose": "Row sub-lines, figure labels, meta cells, footer; muted." },
+      "label": { "displayName": "Column Label", "purpose": "Uppercase ledger column heads and key/value keys only; muted." }
+    },
+    "shadows": [
+      { "name": "dialog-lift", "value": "0 24px 56px -20px rgba(21, 65, 83, 0.5)", "purpose": "Modal confirmation dialogs over an ink-40% backdrop." },
+      { "name": "thumb", "value": "0 1px 2px rgba(21, 65, 83, 0.25)", "purpose": "Switch knob." },
+      { "name": "segment", "value": "0 1px 3px rgba(21, 65, 83, 0.14)", "purpose": "Selected segment of a segmented control." },
+      { "name": "field-halo", "value": "0 0 0 3px rgba(113, 146, 110, 0.25)", "purpose": "Focused input, with an ink border." }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Switch thumb, meter growth, listing well drift." },
+      { "name": "state", "value": "0.15s ease", "purpose": "Colour, border and background changes on links, buttons, chips, fields, nav." },
+      { "name": "meter-grow", "value": "0.6s cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Meter fill scales in from the left." },
+      { "name": "shimmer", "value": "1.4s ease-in-out infinite", "purpose": "Skeleton loading in mist." },
+      { "name": "reduced-motion", "value": "0.01ms", "purpose": "All animation and transition collapse under prefers-reduced-motion." }
+    ],
+    "breakpoints": [
+      { "name": "phone", "value": "640px" },
+      { "name": "public-compact", "value": "760px" },
+      { "name": "detail-stack", "value": "860px" },
+      { "name": "spine-collapse", "value": "960px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one committing action on a screen; ink fill.",
+      "html": "<button class=\"ds-btn ds-btn-primary\">Approve application</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 10px 18px; border-radius: 9px; border: 1px solid rgba(21, 65, 83, 0.2); background: transparent; color: #154153; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13px; font-weight: 600; line-height: 1.2; cursor: pointer; transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease; } .ds-btn-primary { border-color: #154153; background: #154153; color: #f7f6f2; } .ds-btn-primary:hover { background: #2c5566; border-color: #2c5566; } .ds-btn:focus-visible { outline: 2px solid #71926e; outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Default outlined button; outline inks on hover.",
+      "html": "<button class=\"ds-btn-secondary\">Export CSV</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; min-height: 40px; padding: 10px 18px; border-radius: 9px; border: 1px solid rgba(21, 65, 83, 0.2); background: transparent; color: #154153; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: border-color 0.15s ease; } .ds-btn-secondary:hover { border-color: #154153; } .ds-btn-secondary:focus-visible { outline: 2px solid #71926e; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Paper field with label above; focus inks the border, whitens the fill and adds a moss halo.",
+      "html": "<label class=\"ds-field\">Monthly rent (MVR)<input class=\"ds-input\" placeholder=\"14,000\" /></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 7px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 12px; color: #54737e; } .ds-input { width: 100%; min-height: 42px; padding: 10px 12px; border: 1px solid rgba(21, 65, 83, 0.2); border-radius: 8px; background: #f7f6f2; color: #154153; font: inherit; font-size: 13.5px; transition: border-color 0.15s ease, background-color 0.15s ease; } .ds-input::placeholder { color: rgba(21, 65, 83, 0.5); } .ds-input:hover { border-color: rgba(21, 65, 83, 0.35); } .ds-input:focus { outline: none; border-color: #154153; background: #ffffff; box-shadow: 0 0 0 3px rgba(113, 146, 110, 0.25); }"
+    },
+    {
+      "name": "Spine Navigation",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Portal sidebar nav on ink; sage marks the active item.",
+      "html": "<nav class=\"ds-spine\"><div class=\"ds-wordmark\">Housing_4_Raajje</div><div class=\"ds-portal\">Owner Portal</div><a class=\"ds-nav-item\" aria-current=\"page\" href=\"#\">Dashboard</a><a class=\"ds-nav-item\" href=\"#\">My properties</a><a class=\"ds-nav-item\" href=\"#\">Earnings</a></nav>",
+      "css": ".ds-spine { display: flex; flex-direction: column; gap: 2px; width: 248px; padding: 30px 20px; background: #154153; font-family: 'IBM Plex Sans', system-ui, sans-serif; } .ds-wordmark { padding: 0 10px; font-family: 'Space Grotesk', 'IBM Plex Sans', sans-serif; font-size: 15px; font-weight: 600; color: #fff; } .ds-portal { padding: 0 10px 28px; margin-top: 3px; font-size: 11.5px; color: rgba(177, 205, 174, 0.62); } .ds-nav-item { display: block; padding: 10px 12px; border-radius: 8px; font-size: 13.5px; color: rgba(177, 205, 174, 0.82); text-decoration: none; transition: background-color 0.15s ease, color 0.15s ease; } .ds-nav-item:hover { background: rgba(177, 205, 174, 0.1); color: #fff; } .ds-nav-item[aria-current='page'] { background: #b1cdae; color: #154153; font-weight: 600; } .ds-nav-item:focus-visible { outline: 2px solid #b1cdae; outline-offset: 2px; }"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Rounded filter toggle; selected fills ink.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip\" aria-pressed=\"true\">All</button><button class=\"ds-chip\" aria-pressed=\"false\">Malé</button><button class=\"ds-chip\" aria-pressed=\"false\">Hulhumalé</button></div>",
+      "css": ".ds-chips { display: flex; flex-wrap: wrap; gap: 6px; } .ds-chip { min-height: 32px; padding: 6px 13px; border-radius: 999px; border: 1px solid rgba(21, 65, 83, 0.2); background: transparent; color: #2c5566; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 12.5px; cursor: pointer; transition: background-color 0.15s ease, border-color 0.15s ease; } .ds-chip:hover { border-color: #154153; } .ds-chip[aria-pressed='true'] { border-color: #154153; background: #154153; color: #f7f6f2; font-weight: 600; } .ds-chip:focus-visible { outline: 2px solid #71926e; outline-offset: 2px; }"
+    },
+    {
+      "name": "Status Pills",
+      "kind": "chip",
+      "refersTo": "pill-sage",
+      "description": "Worded status on ledger rows in five tones.",
+      "html": "<span class=\"ds-pill ds-pill-sage\">Available</span> <span class=\"ds-pill ds-pill-ink\">Rented</span> <span class=\"ds-pill ds-pill-moss\">Under maintenance</span> <span class=\"ds-pill ds-pill-dashed\">Due</span> <span class=\"ds-pill ds-pill-solid\">Overdue</span>",
+      "css": ".ds-pill { display: inline-block; padding: 4px 10px; border-radius: 999px; border: 1px solid transparent; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 11.5px; font-weight: 600; line-height: 1.35; white-space: nowrap; } .ds-pill-sage { background: #b1cdae; color: #154153; } .ds-pill-ink { background: rgba(21, 65, 83, 0.1); color: #154153; } .ds-pill-moss { background: rgba(113, 146, 110, 0.18); color: #4a6847; } .ds-pill-dashed { border: 1px dashed rgba(21, 65, 83, 0.4); color: #154153; } .ds-pill-solid { background: #154153; color: #f7f6f2; }"
+    },
+    {
+      "name": "Figure Row",
+      "kind": "custom",
+      "description": "One ruled row of 2-4 Space Grotesk figures that opens every portal page.",
+      "html": "<div class=\"ds-figures\"><div><div class=\"ds-fig\">MVR 14,000</div><div class=\"ds-fig-label\">Collected in September</div></div><div><div class=\"ds-fig ds-pos\">1</div><div class=\"ds-fig-label\">Unit available</div></div><div><div class=\"ds-fig\">2</div><div class=\"ds-fig-label\"><a href=\"#\">Payments overdue</a></div></div></div>",
+      "css": ".ds-figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 24px 32px; padding-bottom: 32px; border-bottom: 1px solid rgba(21, 65, 83, 0.12); background: #f7f6f2; color: #154153; } .ds-fig { font-family: 'Space Grotesk', 'IBM Plex Sans', sans-serif; font-size: 32px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; } .ds-pos { color: #71926e; } .ds-fig-label { margin-top: 6px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 12.5px; color: #54737e; } .ds-fig-label a { color: #2c5566; text-decoration: underline; text-decoration-color: rgba(21, 65, 83, 0.3); text-underline-offset: 3px; } .ds-fig-label a:hover { color: #4a6847; text-decoration-color: currentColor; }"
+    },
+    {
+      "name": "Ledger",
+      "kind": "custom",
+      "description": "Hairline-ruled table: uppercase column heads, tabular figures, titled first cell.",
+      "html": "<table class=\"ds-ledger\"><thead><tr><th>Unit</th><th class=\"ds-end\">Rent</th><th class=\"ds-end\">Status</th></tr></thead><tbody><tr><td><div class=\"ds-cell-title\">Coral Court 1C</div><div class=\"ds-cell-sub\">Coralvilla, Kaneeru Goalhi · Malé</div></td><td class=\"ds-end\">MVR 9,800</td><td class=\"ds-end\"><span class=\"ds-p\">Rented</span></td></tr><tr><td><div class=\"ds-cell-title\">Sea Breeze 3B</div><div class=\"ds-cell-sub\">Fehivinaresge, Orchid Magu · Malé</div></td><td class=\"ds-end\">MVR 18,500</td><td class=\"ds-end\"><span class=\"ds-p ds-p-sage\">Available</span></td></tr></tbody></table>",
+      "css": ".ds-ledger { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13.5px; font-variant-numeric: tabular-nums; color: #154153; } .ds-ledger th { padding: 0 16px 11px 0; border-bottom: 1px solid rgba(21, 65, 83, 0.2); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; text-align: left; color: #54737e; } .ds-ledger td { padding: 15px 16px 15px 0; border-bottom: 1px solid rgba(21, 65, 83, 0.09); vertical-align: baseline; } .ds-ledger th:last-child, .ds-ledger td:last-child { padding-right: 0; } .ds-end { text-align: right !important; } .ds-cell-title { font-size: 14.5px; font-weight: 600; } .ds-cell-sub { margin-top: 3px; font-size: 12.5px; color: #54737e; } .ds-p { display: inline-block; padding: 4px 10px; border-radius: 999px; background: rgba(21, 65, 83, 0.1); font-size: 11.5px; font-weight: 600; } .ds-p-sage { background: #b1cdae; }"
+    },
+    {
+      "name": "Listing Sheet",
+      "kind": "card",
+      "refersTo": "sheet",
+      "description": "White sheet with a sage wave image well; border turns moss on hover. No shadow.",
+      "html": "<a class=\"ds-listing\" href=\"#\"><div class=\"ds-well\"></div><div class=\"ds-lbody\"><div class=\"ds-ltop\"><span class=\"ds-lname\">Coral Point 8B</span><span class=\"ds-lcity\">Hulhumalé</span></div><div class=\"ds-laddr\">Kaneerumaage, Nirolhu Magu, Phase 2</div><div class=\"ds-lfoot\"><span>Apartment · 3 rooms</span><span class=\"ds-lrent\">MVR 17,900</span></div></div></a>",
+      "css": ".ds-listing { display: block; width: 290px; background: #ffffff; border: 1px solid rgba(21, 65, 83, 0.12); border-radius: 14px; overflow: hidden; color: #154153; text-decoration: none; font-family: 'IBM Plex Sans', system-ui, sans-serif; transition: border-color 0.2s ease; } .ds-listing:hover { border-color: #71926e; } .ds-listing:focus-visible { outline: 2px solid #71926e; outline-offset: 2px; } .ds-well { height: 168px; background-color: #b1cdae; background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='24' viewBox='0 0 120 24'%3E%3Cpath d='M0 12c15 0 15-8 30-8s15 8 30 8 15-8 30-8 15 8 30 8' fill='none' stroke='%23154153' stroke-opacity='0.06' stroke-width='1.5'/%3E%3C/svg%3E\"); background-size: 120px 24px; transition: background-position 1.2s cubic-bezier(0.16, 1, 0.3, 1); } .ds-listing:hover .ds-well { background-position: 60px 0; } .ds-lbody { padding: 18px 20px 20px; } .ds-ltop, .ds-lfoot { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; } .ds-lname { font-size: 15px; font-weight: 600; } .ds-lcity { font-size: 11.5px; color: #54737e; } .ds-laddr { margin-top: 5px; font-size: 12.5px; color: #54737e; } .ds-lfoot { margin-top: 16px; font-size: 12.5px; color: #2c5566; } .ds-lrent { font-family: 'Space Grotesk', 'IBM Plex Sans', sans-serif; font-size: 15px; font-weight: 600; color: #154153; }"
+    },
+    {
+      "name": "Switch",
+      "kind": "custom",
+      "description": "Availability toggle; moss when on, thumb slides with out-expo ease.",
+      "html": "<button class=\"ds-switch\" role=\"switch\" aria-checked=\"true\"><span class=\"ds-vh\">Listed</span></button> <button class=\"ds-switch\" role=\"switch\" aria-checked=\"false\"><span class=\"ds-vh\">Hidden</span></button>",
+      "css": ".ds-switch { position: relative; width: 40px; height: 22px; padding: 0; border: none; border-radius: 999px; background: rgba(21, 65, 83, 0.22); cursor: pointer; transition: background-color 0.18s ease; } .ds-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(21, 65, 83, 0.25); transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1); } .ds-switch[aria-checked='true'] { background: #71926e; } .ds-switch[aria-checked='true']::after { transform: translateX(18px); } .ds-switch:focus-visible { outline: 2px solid #71926e; outline-offset: 2px; } .ds-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Harbour-Office Ledger",
+    "overview": "Every screen is a sheet of warm paper (#f7f6f2) laid beside a deep-teal spine (#154153). Content is set as ruled rows, not boxes: hairline rules divide records, uppercase 11px column heads sit over tabular figures, and numbers in Space Grotesk carry the hierarchy. The system is calm and dense in the way a well-kept office register is dense. Each line holds one record, and the eye moves down the page rather than across a mosaic.\n\nColour is spent sparingly. Teal ink does the work: text, primary buttons, the spine, the solid \"overdue\" pill. Sage is the one light accent. It marks where you are (the active nav item), what is fine (available or paid pills, paid month marks) and where a photo will go (the wave-patterned image well). Moss marks positive money and live controls (toggles, meters, focus rings). The world rejects the SaaS card-grid dashboard: figures are not tiles, sheets carry no resting shadow, and icons never sit in coloured boxes.",
+    "keyCharacteristics": [
+      "Paper ground, teal spine, white sheets with 1px teal-12% borders and 14px corners.",
+      "Ruled lists and ledger tables as the default content form; tabular numerals everywhere numbers align.",
+      "Space Grotesk for headings and figures, IBM Plex Sans for everything else.",
+      "One ruled figure row (2 to 4 numbers) per dashboard, above the primary list.",
+      "Flat surfaces; only overlays and moving thumbs lift."
+    ],
+    "rules": [
+      { "name": "The Ink Does The Work Rule", "body": "Text, primary actions and the spine are all Harbour Ink. A new emphasis is made with weight, size or Space Grotesk, never with a new hue.", "section": "colors" },
+      { "name": "The Sage Means Here-Or-Fine Rule", "body": "On paper, sage appears only as a fill: the active nav, positive-status pills and month marks, image wells, notices (as wash). It is never body text or a button fill on paper. On the spine it is the text colour.", "section": "colors" },
+      { "name": "The Moss Size Rule", "body": "Moss (#71926e) as text is allowed only at display size (figures at 26px or more). Anything smaller in green uses Deep Moss (#4a6847).", "section": "colors" },
+      { "name": "The Figures Lead Rule", "body": "The largest type on a portal screen is a number. Headings may name the page, but the figure row is where the eye lands.", "section": "typography" },
+      { "name": "The Uppercase Belongs To Columns Rule", "body": "Uppercase tracked 11px text is a column head for the data directly beneath it. It is never placed above a page or section title.", "section": "typography" },
+      { "name": "The Flat Sheet Rule", "body": "Sheets, listing sheets, figure rows, tables and nav carry no shadow. If a surface needs to read as separate, give it a white fill and a 1px line border.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do set every screen as ink on paper, with content in ruled rows and white sheets bordered at 1px line (rgba(21, 65, 83, 0.12)) with 14px corners.",
+      "Do open portal pages with headline, one muted lede line, and one ruled figure row of 2 to 4 numbers in Space Grotesk at 32px.",
+      "Do use tabular numerals for every column of figures and right-align numeric columns.",
+      "Do use Deep Moss (#4a6847) for green text under 26px; Moss (#71926e) only for display figures, toggles, meters and focus.",
+      "Do keep status pills worded and toned by the five pill tones; dashed means pending or due, solid ink means overdue.",
+      "Do use the sage wave image well wherever a listing photo is missing."
+    ],
+    "donts": [
+      "Don't put figures in tiles, stat cards or coloured boxes; they sit in one ruled row.",
+      "Don't add shadows to sheets, cards, tables or nav; lift is reserved for dialogs, switch thumbs, selected segments and the field focus halo.",
+      "Don't place icons in tinted squares or circles; icons are 1.6px-stroke inline SVG beside text (arrows, check, menu, close).",
+      "Don't use sage as a button fill or text colour on paper.",
+      "Don't put uppercase tracked labels above headings; uppercase is for column and key labels only.",
+      "Don't introduce a third typeface or a new accent hue."
+    ]
+  }
+}

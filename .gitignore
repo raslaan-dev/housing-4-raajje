@@ -1,0 +1,13 @@
+node_modules
+.env
+.env.local
+.env.*.local
+.vite
+.DS_Store
+coverage
+*.log
+apps/api/dist
+apps/web/.svelte-kit
+apps/web/build
+packages/database/prisma/dev.db
+packages/database/prisma/dev.db-journal

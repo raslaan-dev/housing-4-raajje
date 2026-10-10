@@ -1,0 +1,333 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Branch {
+  id         String     @id @default(cuid())
+  name       String     @unique
+  city       String
+  users      User[]
+  properties Property[]
+  inquiries  Inquiry[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+model User {
+  id                  String               @id @default(cuid())
+  clerkId             String?              @unique
+  code                String?              @unique
+  email               String               @unique
+  firstName           String?
+  lastName            String?
+  phone               String?
+  status              String               @default("ACTIVE")
+  roleId              String?
+  role                Role?                @relation(fields: [roleId], references: [id])
+  branchId            String?
+  branch              Branch?              @relation(fields: [branchId], references: [id])
+  mfaEnabled          Boolean              @default(false)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  ownerProfile        OwnerProfile?
+  clientProfile       ClientProfile?
+  staffProfile        StaffProfile?
+  auditLogs           AuditLog[]           @relation("actorAudit")
+  propertyNotes       PropertyNote[]
+  applications        Application[]        @relation("userApplications")
+  clientViewings      Viewing[]            @relation("clientViewings")
+  staffViewings       Viewing[]            @relation("staffViewings")
+  clientMaintenance   MaintenanceRequest[] @relation("clientMaintenance")
+  ownerMaintenance    MaintenanceRequest[] @relation("ownerMaintenance")
+  assignedMaintenance MaintenanceRequest[] @relation("assignedMaintenance")
+  sentMessages        Message[]            @relation("sender")
+  receivedMsgs        Message[]            @relation("recipient")
+  notifications       Notification[]
+  paymentRecords      Payment[]            @relation("paymentUser")
+  leaseSignatures     LeaseSignature[]     @relation("signerLeaseSignature")
+  clientLeases        Lease[]              @relation("leaseClient")
+  staffLeases         Lease[]              @relation("leaseStaff")
+  properties          Property[]
+  ownerPayouts        OwnerPayout[]        @relation("ownerPayout")
+  routedInquiries     Inquiry[]            @relation("inquiryRoutedTo")
+}
+
+model StaffProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id])
+  employeeCode String?
+  department   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model OwnerProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id])
+  nationalId    String?
+  bankName      String?
+  accountNumber String?
+  payoutMethod  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ClientProfile {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id])
+  maxRent           Int?
+  preferredLocation String?
+  sex               String?
+  dateOfBirth       DateTime?
+  roomCount         Int?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model Property {
+  id             String                  @id @default(cuid())
+  title          String
+  description    String
+  location       String
+  address        String?
+  district       String?
+  propertyType   String                  @default("Apartment")
+  reference      String?
+  branchId       String
+  branch         Branch                  @relation(fields: [branchId], references: [id])
+  ownerId        String
+  owner          User                    @relation(fields: [ownerId], references: [id])
+  roomCount      Int
+  monthlyRent    Int
+  status         String                  @default("PENDING_APPROVAL")
+  approvalStatus String                  @default("PENDING")
+  isActive       Boolean                 @default(true)
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  applications   Application[]
+  viewings       Viewing[]
+  images         PropertyImage[]
+  history        PropertyStatusHistory[]
+  notes          PropertyNote[]
+  maintenance    MaintenanceRequest[]
+  leases         Lease[]
+}
+
+model PropertyStatusHistory {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+  status     String
+  reason     String?
+  changedBy  String?
+  createdAt  DateTime @default(now())
+}
+
+model PropertyImage {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+  url        String
+  caption    String?
+  createdAt  DateTime @default(now())
+}
+
+model PropertyNote {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  note       String
+  createdAt  DateTime @default(now())
+}
+
+model RejectionReason {
+  id           String        @id @default(cuid())
+  code         String        @unique
+  label        String
+  category     String?
+  createdAt    DateTime      @default(now())
+  applications Application[]
+}
+
+model Application {
+  id                String           @id @default(cuid())
+  userId            String
+  user              User             @relation("userApplications", fields: [userId], references: [id])
+  propertyId        String
+  property          Property         @relation(fields: [propertyId], references: [id])
+  status            String           @default("PENDING")
+  notes             String?
+  rejectionReasonId String?
+  rejectionReason   RejectionReason? @relation(fields: [rejectionReasonId], references: [id])
+  termMonths        Int?
+  reference         String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+model Viewing {
+  id             String   @id @default(cuid())
+  propertyId     String
+  property       Property @relation(fields: [propertyId], references: [id])
+  clientId       String
+  client         User     @relation("clientViewings", fields: [clientId], references: [id])
+  staffId        String?
+  staff          User?    @relation("staffViewings", fields: [staffId], references: [id])
+  scheduledAt    DateTime
+  status         String   @default("SCHEDULED")
+  notes          String?
+  feedbackMetric String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Lease {
+  id               String           @id @default(cuid())
+  reference        String?          @unique
+  termMonths       Int?
+  executedAt       DateTime?
+  propertyId       String
+  property         Property         @relation(fields: [propertyId], references: [id])
+  clientId         String
+  client           User             @relation("leaseClient", fields: [clientId], references: [id])
+  executingStaffId String?
+  executingStaff   User?            @relation("leaseStaff", fields: [executingStaffId], references: [id])
+  startDate        DateTime
+  expiryDate       DateTime
+  monthlyRent      Int
+  advancePayment   Int
+  securityDeposit  Int
+  paymentMethod    String
+  status           String           @default("DRAFT")
+  ownerSigned      Boolean          @default(false)
+  clientSigned     Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  signatures       LeaseSignature[]
+  payments         Payment[]
+}
+
+model LeaseSignature {
+  id        String    @id @default(cuid())
+  leaseId   String
+  lease     Lease     @relation(fields: [leaseId], references: [id])
+  signerId  String
+  signer    User      @relation("signerLeaseSignature", fields: [signerId], references: [id])
+  role      String
+  signedAt  DateTime?
+  status    String    @default("PENDING")
+  createdAt DateTime  @default(now())
+}
+
+model Payment {
+  id                String    @id @default(cuid())
+  leaseId           String
+  lease             Lease     @relation(fields: [leaseId], references: [id])
+  userId            String
+  user              User      @relation("paymentUser", fields: [userId], references: [id])
+  month             String
+  amount            Int
+  paymentMethod     String?
+  paymentDate       DateTime?
+  status            String    @default("PENDING")
+  ownerPayoutAmount Int?
+  managementFee     Int?
+  payoutPeriod      String?
+  createdAt         DateTime  @default(now())
+}
+
+model OwnerPayout {
+  id            String   @id @default(cuid())
+  ownerId       String
+  owner         User     @relation("ownerPayout", fields: [ownerId], references: [id])
+  amount        Int
+  managementFee Int?
+  payoutPeriod  String
+  status        String   @default("PENDING")
+  createdAt     DateTime @default(now())
+}
+
+model MaintenanceRequest {
+  id              String    @id @default(cuid())
+  propertyId      String
+  property        Property  @relation(fields: [propertyId], references: [id])
+  clientId        String
+  client          User      @relation("clientMaintenance", fields: [clientId], references: [id])
+  ownerId         String?
+  owner           User?     @relation("ownerMaintenance", fields: [ownerId], references: [id])
+  issue           String
+  category        String?
+  reference       String?
+  priority        String    @default("MEDIUM")
+  status          String    @default("OPEN")
+  assignedStaffId String?
+  assignedStaff   User?     @relation("assignedMaintenance", fields: [assignedStaffId], references: [id])
+  createdAt       DateTime  @default(now())
+  resolvedAt      DateTime?
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  senderId    String
+  sender      User     @relation("sender", fields: [senderId], references: [id])
+  recipientId String
+  recipient   User     @relation("recipient", fields: [recipientId], references: [id])
+  subject     String?
+  threadKey   String?
+  content     String
+  createdAt   DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  title     String
+  body      String
+  channel   String   @default("Email")
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actor     User?    @relation("actorAudit", fields: [actorId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  metadata  String?
+  createdAt DateTime @default(now())
+}
+
+model Inquiry {
+  id         String   @id @default(cuid())
+  name       String
+  phone      String
+  about      String
+  channel    String
+  branchId   String
+  branch     Branch   @relation(fields: [branchId], references: [id])
+  routedToId String?
+  routedTo   User?    @relation("inquiryRoutedTo", fields: [routedToId], references: [id])
+  createdAt  DateTime @default(now())
+}

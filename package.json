@@ -1,0 +1,23 @@
+{
+  "name": "housing-4-raajje",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "test": "vitest run",
+    "db:generate": "npm --workspace packages/database run db:generate",
+    "db:push": "npm --workspace packages/database run db:push",
+    "db:seed": "npm --workspace packages/database run db:seed",
+    "api:dev": "npm --workspace apps/api run dev",
+    "web:dev": "npm --workspace apps/web run dev"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "vitest": "^2.1.8"
+  }
+}
