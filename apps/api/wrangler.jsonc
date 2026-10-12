@@ -7,6 +7,8 @@
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": false,
   "preview_urls": false,
+  // Passwordless sign-in as any seeded account. Turn off before real users or data.
+  "vars": { "DEMO_LOGIN": "true" },
   "d1_databases": [
     {
       "binding": "DB",
@@ -24,7 +26,7 @@
       "name": "housing-4-raajje-api-preview",
       "workers_dev": false,
       "preview_urls": false,
-      "vars": { "NODE_ENV": "preview" },
+      "vars": { "NODE_ENV": "preview", "DEMO_LOGIN": "true" },
       "d1_databases": [
         {
           "binding": "DB",

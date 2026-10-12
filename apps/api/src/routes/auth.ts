@@ -14,8 +14,9 @@ const router = Router();
 
 const ROLE_ORDER: RoleName[] = ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'PROPERTY_SPECIALIST', 'RECEPTIONIST', 'OWNER', 'CLIENT'];
 
+/** Email-only sign-in. Off in production builds unless DEMO_LOGIN=true (set in wrangler.jsonc). */
 function assertDemoEnabled() {
-  if (process.env.NODE_ENV === 'production') throw new HttpError(404, 'Not found.');
+  if (process.env.NODE_ENV === 'production' && process.env.DEMO_LOGIN !== 'true') throw new HttpError(404, 'Not found.');
 }
 
 router.get('/me', requireAuth, (req, res) => {
