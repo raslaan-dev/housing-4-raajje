@@ -22,8 +22,8 @@ Every mutation writes an `AuditLog` row (`metadata = { description, branch }`) a
 
 | Method | Path | Body | Returns |
 | --- | --- | --- | --- |
-| GET | `/demo-accounts` | – | `DemoAccount[]` (404 in production) |
-| POST | `/demo-login` | `{ email }` | `{ user: SessionUser }` (404 if unknown or in production) |
+| GET | `/demo-accounts` | – | `DemoAccount[]` (local development and configured preview only) |
+| POST | `/demo-login` | `{ email }` | `{ user: SessionUser }` (404 if unknown or disabled outside local development/configured preview) |
 | POST | `/register` | `RegisterBody` | 201 `{ user: SessionUser }`; 409 if the email exists. Creates CLIENT or OWNER only. |
 | GET | `/me` | – | the authenticated request user |
 

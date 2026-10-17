@@ -15,7 +15,8 @@ const router = Router();
 const ROLE_ORDER: RoleName[] = ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'PROPERTY_SPECIALIST', 'RECEPTIONIST', 'OWNER', 'CLIENT'];
 
 function assertDemoEnabled() {
-  if (process.env.NODE_ENV === 'production') throw new HttpError(404, 'Not found.');
+  const enabled = process.env.NODE_ENV === 'development' || (process.env.NODE_ENV === 'preview' && process.env.DEMO_LOGIN === 'true');
+  if (!enabled) throw new HttpError(404, 'Not found.');
 }
 
 router.get('/me', requireAuth, (req, res) => {
