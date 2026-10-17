@@ -6,11 +6,13 @@ All responses are JSON. Errors are `{ "message": string }` with a matching statu
 
 ## Authentication
 
-When Clerk is not configured (or no `Authorization: Bearer` header is sent), the API accepts development headers:
+In local development (`NODE_ENV=development`), requests without an `Authorization` header may use these development-only identity headers:
 
 ```
 x-user-id: <user id>        x-user-email: <email>        x-user-role: CLIENT | OWNER | SYSTEM_ADMIN | ...
 ```
+
+These headers are ignored in preview and production. If an `Authorization` header is supplied, it must contain a valid Clerk bearer token; an invalid token is rejected and never falls back to development headers.
 
 Staff branch scope is never taken from headers. A system admin may pass `?branch=all|Male|Hulhumale|Villingili` (default `all`). Every other staff role is pinned to the branch stored on their user record.
 

@@ -1,14 +1,9 @@
 import type { NextFunction, Request, Response } from 'express';
-import { createClerkClient } from '@clerk/backend';
-
-const clerk = createClerkClient({
-  secretKey: process.env.CLERK_SECRET_KEY ?? 'sk_test_fake_placeholder',
-  publishableKey: process.env.CLERK_PUBLISHABLE_KEY ?? 'pk_test_fake_placeholder'
-});
+import { verifyToken } from '@clerk/backend';
 
 export type AppUser = {
   id: string;
-  email: string;
+  email?: string;
   role?: string;
   branchId?: string | null;
 };
@@ -32,38 +27,38 @@ export function getCurrentUserFromHeaders(req: Request): AppUser | null {
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
-  const devUser = getCurrentUserFromHeaders(req);
 
-  if (process.env.CLERK_SECRET_KEY && authHeader?.startsWith('Bearer ')) {
+  if (authHeader !== undefined) {
+    const match = /^Bearer\s+(\S+)$/i.exec(authHeader);
+    const secretKey = process.env.CLERK_SECRET_KEY;
+
+    if (!match || !secretKey) {
+      return res.status(401).json({ message: 'Invalid authentication credentials.' });
+    }
+
     try {
-      const token = authHeader.replace('Bearer ', '');
-      const clerkClient = clerk as any;
-      const session = clerkClient.verifyToken ? await clerkClient.verifyToken({ token }) : null;
-
-      if (session) {
-        req.user = {
-          id: String(session.sub ?? 'clerk-user'),
-          email: session.email ?? 'clerk-user@example.com',
-          role: 'CLIENT'
-        };
-        return next();
+      const verifiedToken = await verifyToken(match[1], { secretKey });
+      if (typeof verifiedToken.sub !== 'string' || verifiedToken.sub.length === 0) {
+        return res.status(401).json({ message: 'Invalid Clerk token.' });
       }
 
-      const payload = JSON.parse(Buffer.from(token.split('.')[1] ?? '', 'base64').toString('utf8'));
       req.user = {
-        id: String(payload.sub ?? 'clerk-user'),
-        email: payload.email ?? 'clerk-user@example.com',
-        role: payload.role ?? 'CLIENT'
+        id: verifiedToken.sub,
+        ...(typeof verifiedToken.email === 'string' ? { email: verifiedToken.email } : {}),
+        role: 'CLIENT'
       };
       return next();
-    } catch (error) {
+    } catch {
       return res.status(401).json({ message: 'Invalid Clerk token.' });
     }
   }
 
-  if (devUser) {
-    req.user = devUser;
-    return next();
+  if (process.env.NODE_ENV === 'development') {
+    const devUser = getCurrentUserFromHeaders(req);
+    if (devUser) {
+      req.user = devUser;
+      return next();
+    }
   }
 
   return res.status(401).json({ message: 'Authentication required.' });
