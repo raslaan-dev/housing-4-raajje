@@ -15,10 +15,14 @@ function headers(): Record<string, string> {
   const h: Record<string, string> = { 'Content-Type': 'application/json' };
   const user = session.user;
   if (user) {
-    h['x-user-id'] = user.id;
-    h['x-user-email'] = user.email;
-    h['x-user-role'] = user.role;
-    if (user.branch) h['x-user-branch'] = user.branch.id;
+    if (session.token) {
+      h.Authorization = `Bearer ${session.token}`;
+    } else {
+      h['x-user-id'] = user.id;
+      h['x-user-email'] = user.email;
+      h['x-user-role'] = user.role;
+      if (user.branch) h['x-user-branch'] = user.branch.id;
+    }
   }
   return h;
 }

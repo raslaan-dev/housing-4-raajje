@@ -63,6 +63,20 @@ model User {
   properties          Property[]
   ownerPayouts        OwnerPayout[]        @relation("ownerPayout")
   routedInquiries     Inquiry[]            @relation("inquiryRoutedTo")
+  staffOtpChallenge StaffOtpChallenge?
+}
+
+model StaffOtpChallenge {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int      @default(0)
+  lastSentAt DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([expiresAt])
 }
 
 model StaffProfile {

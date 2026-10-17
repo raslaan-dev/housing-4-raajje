@@ -12,7 +12,9 @@ In local development (`NODE_ENV=development`), requests without an `Authorizatio
 x-user-id: <user id>        x-user-email: <email>        x-user-role: CLIENT | OWNER | SYSTEM_ADMIN | ...
 ```
 
-These headers are ignored in preview and production. If an `Authorization` header is supplied, it must contain a valid Clerk bearer token; an invalid token is rejected and never falls back to development headers.
+These headers are ignored in preview and production. Preview demo sign-in returns a short-lived HMAC-signed bearer token; all other bearer tokens must pass Clerk verification. Invalid tokens never fall back to development headers.
+
+Demo staff sign-in sends a six-digit email code; the code expires after 10 minutes, allows at most five attempts, and can be resent once per minute. Client and owner demo sign-in do not use this staff OTP. Configure `STAFF_OTP_EMAIL` as the shared delivery mailbox for seeded `.test` staff accounts, `STAFF_OTP_SECRET` as a private random secret of at least 32 characters, and a working `RESEND_API_KEY` plus verified `RESEND_FROM` sender. Keep those values in local/Cloudflare environment settings, not source control. For preview, configure the mailbox and sender on the preview Worker, and store `STAFF_OTP_SECRET` and `RESEND_API_KEY` as preview secrets. Preview demo sessions are signed with `STAFF_OTP_SECRET` and expire after eight hours. Apply the `0002_staff_otp_challenges.sql` migration before enabling OTP on a database.
 
 Staff branch scope is never taken from headers. A system admin may pass `?branch=all|Male|Hulhumale|Villingili` (default `all`). Every other staff role is pinned to the branch stored on their user record.
 
@@ -23,9 +25,13 @@ Every mutation writes an `AuditLog` row (`metadata = { description, branch }`) a
 | Method | Path | Body | Returns |
 | --- | --- | --- | --- |
 | GET | `/demo-accounts` | – | `DemoAccount[]` (local development and configured preview only) |
-| POST | `/demo-login` | `{ email }` | `{ user: SessionUser }` (404 if unknown or disabled outside local development/configured preview) |
-| POST | `/register` | `RegisterBody` | 201 `{ user: SessionUser }`; 409 if the email exists. Creates CLIENT or OWNER only. |
+| POST | `/demo-login` | `{ email, accountType? }` | Client/owner: `{ user, token? }`; staff: `{ otpRequired: true, destination }` and sends an email code |
+| POST | `/staff-otp/resend` | `{ email }` | `{ sent: true, destination }`; 429 during the one-minute resend cooldown |
+| POST | `/staff-otp/verify` | `{ email, code }` | `{ user, token? }`; 401 for an invalid, expired, or used code |
+| POST | `/register` | `RegisterBody` | 201 `{ user: SessionUser, token? }`; 409 if the email exists. Creates CLIENT or OWNER only. |
 | GET | `/me` | – | the authenticated request user |
+
+Demo login and OTP routes are enabled only in local development or configured preview; they return 404 in production.
 
 ## Public listings `/api/properties`
 

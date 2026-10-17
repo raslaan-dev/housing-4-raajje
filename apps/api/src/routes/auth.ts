@@ -9,6 +9,8 @@ import { nextUserCode } from '../lib/codes.js';
 import { audit } from '../lib/audit.js';
 import { notify } from '../lib/notify.js';
 import { parseYmd } from '../lib/dates.js';
+import { issueStaffOtp, verifyStaffOtp } from '../lib/staff-otp.js';
+import { issueDemoSessionToken } from '../lib/demo-session.js';
 
 const router = Router();
 
@@ -56,10 +58,70 @@ router.post(
   '/demo-login',
   asyncHandler(async (req, res) => {
     assertDemoEnabled();
-    const { email } = z.object({ email: z.string().email() }).parse(req.body ?? {});
+    const { email, accountType } = z.object({
+      email: z.string().email(),
+      accountType: z.enum(['client', 'owner', 'staff']).optional()
+    }).parse(req.body ?? {});
     const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() }, include: userInclude });
     if (!user) throw new HttpError(404, 'No account with that email.');
-    const body: { user: SessionUser } = { user: toSessionUser(user) };
+    if (user.status !== 'ACTIVE') throw new HttpError(403, 'This account is inactive.');
+
+    const isStaff = Boolean(user.role?.name && ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'PROPERTY_SPECIALIST', 'RECEPTIONIST'].includes(user.role.name));
+    const actualAccountType = isStaff ? 'staff' : user.role?.name === 'OWNER' ? 'owner' : 'client';
+    if (accountType && actualAccountType !== accountType) {
+      throw new HttpError(400, `That account is a ${actualAccountType} account. Choose the matching sign-in tab.`);
+    }
+
+    if (isStaff) {
+      const destination = await issueStaffOtp(user.id, user.email);
+      res.json({ otpRequired: true, destination });
+      return;
+    }
+
+    const body: { user: SessionUser; token?: string } = { user: toSessionUser(user) };
+    const token = issueDemoSessionToken(user);
+    if (token) body.token = token;
+    res.json(body);
+  })
+);
+
+const staffOtpRequestSchema = z.object({ email: z.string().trim().toLowerCase().email() });
+const staffOtpVerifySchema = staffOtpRequestSchema.extend({ code: z.string().regex(/^\d{6}$/, 'Enter the six-digit code.') });
+
+async function findActiveStaff(email: string) {
+  const user = await prisma.user.findUnique({ where: { email }, include: userInclude });
+  if (
+    !user ||
+    user.status !== 'ACTIVE' ||
+    !user.role ||
+    !['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'PROPERTY_SPECIALIST', 'RECEPTIONIST'].includes(user.role.name)
+  ) {
+    throw new HttpError(404, 'Staff account not found.');
+  }
+  return user;
+}
+
+router.post(
+  '/staff-otp/resend',
+  asyncHandler(async (req, res) => {
+    assertDemoEnabled();
+    const { email } = staffOtpRequestSchema.parse(req.body ?? {});
+    const user = await findActiveStaff(email);
+    const destination = await issueStaffOtp(user.id, user.email);
+    res.json({ sent: true, destination });
+  })
+);
+
+router.post(
+  '/staff-otp/verify',
+  asyncHandler(async (req, res) => {
+    assertDemoEnabled();
+    const { email, code } = staffOtpVerifySchema.parse(req.body ?? {});
+    const user = await findActiveStaff(email);
+    await verifyStaffOtp(user.id, code);
+    const body: { user: SessionUser; token?: string } = { user: toSessionUser(user) };
+    const token = issueDemoSessionToken(user);
+    if (token) body.token = token;
     res.json(body);
   })
 );
@@ -120,7 +182,9 @@ router.post(
     await audit(user.id, 'user.registered', 'User', user.id, `Registered ${body.role === 'CLIENT' ? 'client' : 'owner'} account ${code}`, 'All');
     await notify(user.id, 'WELCOME', 'Welcome to Housing_4_Raajje', `Your ${body.role === 'CLIENT' ? 'client' : 'owner'} account ${code} is ready.`, 'Email');
 
-    const out: { user: SessionUser } = { user: toSessionUser(user) };
+    const out: { user: SessionUser; token?: string } = { user: toSessionUser(user) };
+    const token = issueDemoSessionToken(user);
+    if (token) out.token = token;
     res.status(201).json(out);
   })
 );
