@@ -217,6 +217,10 @@ router.post(
 router.post(
   '/payments',
   asyncHandler(async (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+      throw new HttpError(503, 'Online payments are not configured. Rent cannot be marked paid yet.');
+    }
+
     const user = await loadClient(req);
     const { month } = z.object({ month: z.string().refine(isMonthKey, 'Use YYYY-MM') }).parse(req.body ?? {});
     const lease = await prisma.lease.findFirst({ where: { clientId: user.id, status: 'ACTIVE' }, include: clientLeaseInclude });

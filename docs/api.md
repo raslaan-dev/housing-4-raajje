@@ -44,7 +44,7 @@ Every mutation writes an `AuditLog` row (`metadata = { description, branch }`) a
 | POST | `/viewings` | `{ propertyId }` | 201 `{ id, propertyId, status, scheduledAt }` (SCHEDULED, now + 2 days); 409 if one is already scheduled |
 | GET | `/lease` | – | `ClientLease \| null` (ACTIVE first, else AWAITING_SIGNATURE) |
 | POST | `/lease/sign` | – | `ClientLease`. The lease activates when both sides have signed. |
-| POST | `/payments` | `{ month: 'YYYY-MM' }` | 201 `ClientLease`; 409 if already paid. Records 10% fee and 90% owner payout. |
+| POST | `/payments` | `{ month: 'YYYY-MM' }` | 201 `ClientLease` in development/preview demo mode; 503 in production until a trusted payment provider is integrated. |
 | GET | `/notifications` | – | `NotificationItem[]`, newest first |
 | GET | `/maintenance` | – | `MaintenanceItem[]`, newest first |
 | POST | `/maintenance` | `{ category, description }` | 201 `MaintenanceItem` (for the leased property; owner notified) |
@@ -89,4 +89,4 @@ Rent is due on the 5th. An unpaid month is `OVERDUE` once today is past the 5th 
 
 ## Legacy endpoints
 
-`/api/applications`, `/api/viewings`, `/api/leases`, `/api/payments`, `/api/maintenance` and `/api/admin` from the first scaffold still exist. The portal does not use them.
+The legacy `/api/payments` route is demo-only and returns 404 in production. Other endpoints from the first scaffold (`/api/applications`, `/api/viewings`, `/api/leases`, `/api/maintenance` and `/api/admin`) remain separate from the portal flows.

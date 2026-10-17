@@ -5,6 +5,13 @@ import { authorize } from '../middleware/authorize.js';
 
 const router = Router();
 
+router.use((_req, res, next) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ message: 'Not found.' });
+  }
+  next();
+});
+
 router.get('/', requireAuth, async (_req, res) => {
   const payments = await prisma.payment.findMany({ include: { lease: true } });
   res.json(payments);
