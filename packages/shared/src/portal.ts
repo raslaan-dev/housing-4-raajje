@@ -9,6 +9,13 @@ export type PaymentState = 'PAID' | 'PENDING' | 'OVERDUE';
 
 export type BranchRef = { id: string; name: BranchName; city: string; number: 1 | 2 | 3 };
 
+export type ListingImage = {
+  url: string;
+  caption: string;
+  credit: string;
+  sourceUrl: string;
+};
+
 export type SessionUser = {
   id: string;
   code: string; // CL-3092, OWN-20418, STF-014
@@ -26,9 +33,11 @@ export type DemoAccount = Pick<SessionUser, 'id' | 'code' | 'email' | 'name' | '
 export type Listing = {
   id: string;
   title: string;
+  description: string;
   address: string; // "Fehivinaresge, Orchid Magu"
   district: string; // "Machangolhi · Malé"
   city: string; // "Malé" | "Hulhumalé" | "Villingili"
+  images: ListingImage[];
   branch: BranchRef;
   propertyType: PropertyType;
   roomCount: number;

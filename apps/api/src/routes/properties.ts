@@ -52,7 +52,7 @@ router.get(
     const orderBy =
       sort === 'low' ? { monthlyRent: 'asc' as const } : sort === 'high' ? { monthlyRent: 'desc' as const } : { createdAt: 'desc' as const };
 
-    const rows = await prisma.property.findMany({ where, include: { branch: true }, orderBy });
+    const rows = await prisma.property.findMany({ where, include: { branch: true, images: true }, orderBy });
     let listings: Listing[] = rows.map(toListing);
 
     if (q) {
@@ -68,7 +68,10 @@ router.get(
 router.get(
   '/:id',
   asyncHandler(async (req, res) => {
-    const property = await prisma.property.findUnique({ where: { id: param(req, 'id') }, include: { branch: true } });
+    const property = await prisma.property.findUnique({
+      where: { id: param(req, 'id') },
+      include: { branch: true, images: true }
+    });
     if (!property || property.approvalStatus !== 'APPROVED') throw new HttpError(404, 'Property not found.');
     const listing: Listing = toListing(property);
     res.json(listing);

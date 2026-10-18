@@ -129,10 +129,14 @@
   {:else}
     <ul class="grid" class:is-refreshing={loading}>
       {#each listings as l (l.id)}
+        {@const image = l.images[0]}
         <li>
-          <a class="card" href={hrefFor(l)}>
-            <div class="well card-well" aria-hidden="true"></div>
-            <div class="card-body">
+          <article class="card">
+            <figure class="card-photo">
+              <img class="card-image" src={image.url} alt={image.caption} loading="lazy" />
+              <figcaption><a href={image.sourceUrl} target="_blank" rel="noreferrer">{image.credit}</a></figcaption>
+            </figure>
+            <a class="card-body" href={hrefFor(l)}>
               <div class="card-top">
                 <span class="card-name">{l.title}</span>
                 <span class="card-city">{l.city}</span>
@@ -142,8 +146,8 @@
                 <span>{l.propertyType} · {rooms(l.roomCount)}</span>
                 <span class="card-rent num">{mvr(l.monthlyRent)}</span>
               </div>
-            </div>
-          </a>
+            </a>
+          </article>
         </li>
       {/each}
     </ul>
@@ -255,7 +259,6 @@
   }
 
   .card {
-    display: block;
     height: 100%;
     background: var(--sheet);
     border: 1px solid var(--line);
@@ -269,16 +272,45 @@
     color: var(--ink);
   }
 
-  .card-well {
+  .card-photo {
+    position: relative;
     height: 168px;
-    transition: background-position 1.2s var(--ease-out);
+    margin: 0;
+    overflow: hidden;
+    background: var(--mist);
   }
 
-  .card:hover .card-well {
-    background-position: 60px 0;
+  .card-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s var(--ease-out);
+  }
+
+  .card:hover .card-image {
+    transform: scale(1.04);
+  }
+
+  .card-photo figcaption {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    max-width: calc(100% - 16px);
+    padding: 3px 7px;
+    border-radius: 5px;
+    background: rgba(15, 42, 50, 0.78);
+    color: #fff;
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .card-photo figcaption a {
+    color: inherit;
   }
 
   .card-body {
+    display: block;
     padding: 18px 20px 20px;
   }
 

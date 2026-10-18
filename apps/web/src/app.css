@@ -761,15 +761,6 @@ input[type='range'] {
   transform: translateX(18px);
 }
 
-/* ---------- Image well (no photos uploaded yet) ---------- */
-
-.well {
-  position: relative;
-  background-color: var(--sage);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='24' viewBox='0 0 120 24'%3E%3Cpath d='M0 12c15 0 15-8 30-8s15 8 30 8 15-8 30-8 15 8 30 8' fill='none' stroke='%23154153' stroke-opacity='0.06' stroke-width='1.5'/%3E%3C/svg%3E");
-  background-size: 120px 24px;
-}
-
 @media (max-width: 640px) {
   .page-title {
     font-size: 24px;
