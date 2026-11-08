@@ -14,7 +14,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { authorize } from '../middleware/authorize.js';
 import { asyncHandler, HttpError, param } from '../lib/http.js';
 import { asPropertyType, branchCity, branchLabel, districtToBranch, fullName, toBranchRef, toSessionUser, userInclude } from '../lib/serialize.js';
-import { audit } from '../lib/audit.js';
+import { audit, parseReviewFeedback } from '../lib/audit.js';
 import { notify } from '../lib/notify.js';
 import { nextPropertyReference } from '../lib/codes.js';
 import { buildLeasePayments, leaseTerm, signLease } from '../lib/leases.js';
@@ -82,6 +82,7 @@ function toOwnerUnit(unit: UnitRow, now = new Date()): OwnerUnit {
     monthlyRent: unit.monthlyRent,
     status: unit.status,
     approvalStatus: unit.approvalStatus,
+    review: unit.approvalStatus === 'REJECTED' ? parseReviewFeedback(unit.reviewFeedback) : null,
     viewCount,
     lastViewing: attended[0]?.scheduledAt.toISOString() ?? null,
     feedback,

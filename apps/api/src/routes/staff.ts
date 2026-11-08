@@ -11,6 +11,7 @@ import {
   type Inquiry,
   type MatchResult,
   type QueueItem,
+  type ReviewFeedback,
   type StaffAccount,
   type StaffLease,
   type StaffOptions,
@@ -199,7 +200,7 @@ router.post(
       assertInScope(scope, p.branchId);
       if (p.approvalStatus !== 'PENDING') throw new HttpError(409, 'This registration has already been decided.');
       await prisma.$transaction([
-        prisma.property.update({ where: { id: p.id }, data: { approvalStatus: 'APPROVED', status: 'AVAILABLE' } }),
+        prisma.property.update({ where: { id: p.id }, data: { approvalStatus: 'APPROVED', status: 'AVAILABLE', reviewFeedback: null } }),
         prisma.propertyStatusHistory.create({ data: { propertyId: p.id, status: 'AVAILABLE', reason: 'Registration approved', changedBy: actorId } })
       ]);
       const ref = p.reference ?? p.id;
@@ -227,9 +228,18 @@ router.post(
   asyncHandler(async (req, res) => {
     const scope = await resolveScope(req);
     const kind = parseKind(param(req, 'kind'));
-    const { reason } = z.object({ reason: z.string().trim().max(500).optional() }).parse(req.body ?? {});
+    const { reason, checks = [] } = z
+      .object({ reason: z.string().trim().max(500).optional(), checks: z.array(z.string()).optional() })
+      .parse(req.body ?? {});
     const actorId = req.user!.id;
-    const why = reason ? ` Reason: ${reason}` : '';
+    const missing = QUEUE_CHECKS[kind].filter((c) => !checks.includes(c));
+    const feedback: ReviewFeedback = {
+      passed: QUEUE_CHECKS[kind].filter((c) => checks.includes(c)),
+      missing,
+      returnedAt: new Date().toISOString()
+    };
+    const reviewFeedback = JSON.stringify(feedback);
+    const why = [missing.length ? ` Missing: ${missing.join('; ')}.` : '', reason ? ` Reason: ${reason}` : ''].join('');
 
     if (kind === 'PROPERTY') {
       const p = await prisma.property.findUnique({ where: { id: param(req, 'id') }, include: { branch: true } });
@@ -237,7 +247,7 @@ router.post(
       assertInScope(scope, p.branchId);
       if (p.approvalStatus !== 'PENDING') throw new HttpError(409, 'This registration has already been decided.');
       await prisma.$transaction([
-        prisma.property.update({ where: { id: p.id }, data: { approvalStatus: 'REJECTED' } }),
+        prisma.property.update({ where: { id: p.id }, data: { approvalStatus: 'REJECTED', reviewFeedback } }),
         prisma.propertyStatusHistory.create({ data: { propertyId: p.id, status: p.status, reason: `Registration returned.${why}`, changedBy: actorId } })
       ]);
       const ref = p.reference ?? p.id;
@@ -248,7 +258,7 @@ router.post(
       if (!a) throw new HttpError(404, 'Application not found.');
       assertInScope(scope, a.property.branchId);
       if (a.status !== 'PENDING') throw new HttpError(409, 'This application has already been decided.');
-      await prisma.application.update({ where: { id: a.id }, data: { status: 'REJECTED', notes: reason ?? a.notes } });
+      await prisma.application.update({ where: { id: a.id }, data: { status: 'REJECTED', notes: reason ?? a.notes, reviewFeedback } });
       await audit(actorId, 'application.returned', 'Application', a.id, `Returned client application ${a.user.code ?? a.userId}.${why}`, branchLabel(a.property.branch));
       await notify(a.userId, 'APPLICATION', 'Application not approved', `Your application for ${a.property.title} was not approved.${why}`, 'Email');
     }
