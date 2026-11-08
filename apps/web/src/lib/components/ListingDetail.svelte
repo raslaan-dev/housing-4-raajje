@@ -12,9 +12,16 @@
 
 <div class="detail">
   <div>
-    <div class="well hero-well" aria-hidden="true"></div>
+    <figure class="hero-photo">
+      <img src={listing.images[0].url} alt={listing.images[0].caption} />
+      <figcaption>
+        Representative demo imagery ·
+        <a href={listing.images[0].sourceUrl} target="_blank" rel="noreferrer">{listing.images[0].credit}</a>
+      </figcaption>
+    </figure>
     <h1 class="title">{listing.title}</h1>
     <p class="address">{fullAddress(listing)}</p>
+    <p class="description">{listing.description}</p>
     <dl class="facts">
       <div><dt>Type</dt><dd>{listing.propertyType}</dd></div>
       <div><dt>Rooms</dt><dd class="num">{listing.roomCount}</dd></div>
@@ -37,9 +44,37 @@
     align-items: start;
   }
 
-  .hero-well {
+  .hero-photo {
+    position: relative;
     height: 360px;
+    margin: 0;
+    overflow: hidden;
     border-radius: var(--radius-sheet);
+    background: var(--mist);
+  }
+
+  .hero-photo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .hero-photo figcaption {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    padding: 5px 9px;
+    border-radius: 6px;
+    background: rgba(15, 42, 50, 0.78);
+    color: #fff;
+    font-size: 11px;
+  }
+
+  .hero-photo figcaption a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 
   .title {
@@ -52,6 +87,14 @@
     margin-top: 8px;
     font-size: 14px;
     color: var(--muted);
+  }
+
+  .description {
+    margin-top: 18px;
+    max-width: 68ch;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--ink-soft);
   }
 
   .facts {
@@ -100,7 +143,7 @@
       grid-template-columns: 1fr;
     }
 
-    .hero-well {
+    .hero-photo {
       height: 220px;
     }
 

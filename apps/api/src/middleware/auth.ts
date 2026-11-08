@@ -1,14 +1,10 @@
 import type { NextFunction, Request, Response } from 'express';
-import { createClerkClient } from '@clerk/backend';
-
-const clerk = createClerkClient({
-  secretKey: process.env.CLERK_SECRET_KEY ?? 'sk_test_fake_placeholder',
-  publishableKey: process.env.CLERK_PUBLISHABLE_KEY ?? 'pk_test_fake_placeholder'
-});
+import { verifyToken } from '@clerk/backend';
+import { verifyDemoSessionToken } from '../lib/demo-session.js';
 
 export type AppUser = {
   id: string;
-  email: string;
+  email?: string;
   role?: string;
   branchId?: string | null;
 };
@@ -32,38 +28,49 @@ export function getCurrentUserFromHeaders(req: Request): AppUser | null {
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
-  const devUser = getCurrentUserFromHeaders(req);
 
-  if (process.env.CLERK_SECRET_KEY && authHeader?.startsWith('Bearer ')) {
-    try {
-      const token = authHeader.replace('Bearer ', '');
-      const clerkClient = clerk as any;
-      const session = clerkClient.verifyToken ? await clerkClient.verifyToken({ token }) : null;
+  if (authHeader !== undefined) {
+    const match = /^Bearer\s+(\S+)$/i.exec(authHeader);
+    if (!match) return res.status(401).json({ message: 'Invalid authentication credentials.' });
 
-      if (session) {
-        req.user = {
-          id: String(session.sub ?? 'clerk-user'),
-          email: session.email ?? 'clerk-user@example.com',
-          role: 'CLIENT'
-        };
-        return next();
-      }
-
-      const payload = JSON.parse(Buffer.from(token.split('.')[1] ?? '', 'base64').toString('utf8'));
+    if (match[1].startsWith('h4rdemo.')) {
+      const demoSession = verifyDemoSessionToken(match[1]);
+      if (!demoSession) return res.status(401).json({ message: 'Invalid or expired session.' });
       req.user = {
-        id: String(payload.sub ?? 'clerk-user'),
-        email: payload.email ?? 'clerk-user@example.com',
-        role: payload.role ?? 'CLIENT'
+        id: demoSession.sub,
+        email: demoSession.email,
+        role: demoSession.role,
+        branchId: demoSession.branchId
       };
       return next();
-    } catch (error) {
+    }
+
+    const secretKey = process.env.CLERK_SECRET_KEY;
+    if (!secretKey) return res.status(401).json({ message: 'Invalid authentication credentials.' });
+
+    try {
+      const verifiedToken = await verifyToken(match[1], { secretKey });
+      if (typeof verifiedToken.sub !== 'string' || verifiedToken.sub.length === 0) {
+        return res.status(401).json({ message: 'Invalid Clerk token.' });
+      }
+
+      req.user = {
+        id: verifiedToken.sub,
+        ...(typeof verifiedToken.email === 'string' ? { email: verifiedToken.email } : {}),
+        role: 'CLIENT'
+      };
+      return next();
+    } catch {
       return res.status(401).json({ message: 'Invalid Clerk token.' });
     }
   }
 
-  if (devUser) {
-    req.user = devUser;
-    return next();
+  if (process.env.NODE_ENV === 'development') {
+    const devUser = getCurrentUserFromHeaders(req);
+    if (devUser) {
+      req.user = devUser;
+      return next();
+    }
   }
 
   return res.status(401).json({ message: 'Authentication required.' });

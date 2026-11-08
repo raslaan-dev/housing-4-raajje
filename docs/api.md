@@ -6,11 +6,15 @@ All responses are JSON. Errors are `{ "message": string }` with a matching statu
 
 ## Authentication
 
-When Clerk is not configured (or no `Authorization: Bearer` header is sent), the API accepts development headers:
+In local development (`NODE_ENV=development`), requests without an `Authorization` header may use these development-only identity headers:
 
 ```
 x-user-id: <user id>        x-user-email: <email>        x-user-role: CLIENT | OWNER | SYSTEM_ADMIN | ...
 ```
+
+These headers are ignored in preview and production. Preview demo sign-in returns a short-lived HMAC-signed bearer token; all other bearer tokens must pass Clerk verification. Invalid tokens never fall back to development headers.
+
+Demo staff sign-in sends a six-digit email code; the code expires after 10 minutes, allows at most five attempts, and can be resent once per minute. Client and owner demo sign-in do not use this staff OTP. Configure `STAFF_OTP_EMAIL` as the shared delivery mailbox for seeded `.test` staff accounts, `STAFF_OTP_SECRET` as a private random secret of at least 32 characters, and a working `RESEND_API_KEY` plus verified `RESEND_FROM` sender. Keep those values in local/Cloudflare environment settings, not source control. For preview, configure the mailbox and sender on the preview Worker, and store `STAFF_OTP_SECRET` and `RESEND_API_KEY` as preview secrets. Preview demo sessions are signed with `STAFF_OTP_SECRET` and expire after eight hours. Apply the `0002_staff_otp_challenges.sql` migration before enabling OTP on a database.
 
 Staff branch scope is never taken from headers. A system admin may pass `?branch=all|Male|Hulhumale|Villingili` (default `all`). Every other staff role is pinned to the branch stored on their user record.
 
@@ -20,10 +24,14 @@ Every mutation writes an `AuditLog` row (`metadata = { description, branch }`) a
 
 | Method | Path | Body | Returns |
 | --- | --- | --- | --- |
-| GET | `/demo-accounts` | – | `DemoAccount[]` (404 in production) |
-| POST | `/demo-login` | `{ email }` | `{ user: SessionUser }` (404 if unknown or in production) |
-| POST | `/register` | `RegisterBody` | 201 `{ user: SessionUser }`; 409 if the email exists. Creates CLIENT or OWNER only. |
+| GET | `/demo-accounts` | – | `DemoAccount[]` (local development and configured preview only) |
+| POST | `/demo-login` | `{ email, accountType? }` | Client/owner: `{ user, token? }`; staff: `{ otpRequired: true, destination }` and sends an email code |
+| POST | `/staff-otp/resend` | `{ email }` | `{ sent: true, destination }`; 429 during the one-minute resend cooldown |
+| POST | `/staff-otp/verify` | `{ email, code }` | `{ user, token? }`; 401 for an invalid, expired, or used code |
+| POST | `/register` | `RegisterBody` | 201 `{ user: SessionUser, token? }`; 409 if the email exists. Creates CLIENT or OWNER only. |
 | GET | `/me` | – | the authenticated request user |
+
+Demo login and OTP routes are enabled only in local development or configured preview; they return 404 in production.
 
 ## Public listings `/api/properties`
 
@@ -42,7 +50,7 @@ Every mutation writes an `AuditLog` row (`metadata = { description, branch }`) a
 | POST | `/viewings` | `{ propertyId }` | 201 `{ id, propertyId, status, scheduledAt }` (SCHEDULED, now + 2 days); 409 if one is already scheduled |
 | GET | `/lease` | – | `ClientLease \| null` (ACTIVE first, else AWAITING_SIGNATURE) |
 | POST | `/lease/sign` | – | `ClientLease`. The lease activates when both sides have signed. |
-| POST | `/payments` | `{ month: 'YYYY-MM' }` | 201 `ClientLease`; 409 if already paid. Records 10% fee and 90% owner payout. |
+| POST | `/payments` | `{ month: 'YYYY-MM' }` | 201 `ClientLease` in development/preview demo mode; 503 in production until a trusted payment provider is integrated. |
 | GET | `/notifications` | – | `NotificationItem[]`, newest first |
 | GET | `/maintenance` | – | `MaintenanceItem[]`, newest first |
 | POST | `/maintenance` | `{ category, description }` | 201 `MaintenanceItem` (for the leased property; owner notified) |
@@ -87,4 +95,4 @@ Rent is due on the 5th. An unpaid month is `OVERDUE` once today is past the 5th 
 
 ## Legacy endpoints
 
-`/api/applications`, `/api/viewings`, `/api/leases`, `/api/payments`, `/api/maintenance` and `/api/admin` from the first scaffold still exist. The portal does not use them.
+The legacy `/api/payments` route is demo-only and returns 404 in production. Other endpoints from the first scaffold (`/api/applications`, `/api/viewings`, `/api/leases`, `/api/maintenance` and `/api/admin`) remain separate from the portal flows.

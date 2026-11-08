@@ -7,8 +7,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": false,
   "preview_urls": false,
-  // Passwordless sign-in as any seeded account. Turn off before real users or data.
-  "vars": { "DEMO_LOGIN": "true" },
+  "vars": { "NODE_ENV": "production" },
   "d1_databases": [
     {
       "binding": "DB",

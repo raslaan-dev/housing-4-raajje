@@ -28,6 +28,10 @@
   let reg = $state({ firstName: '', lastName: '', email: '', phone: '', nationalId: '', sex: 'Female', dateOfBirth: '', maxRent: '' });
   let useMfa = $state(true);
   let pending = $state<SessionUser | null>(null);
+  let pendingToken = $state<string | null>(null);
+  let pendingEmail = $state('');
+  let otpDestination = $state('');
+  let otpResent = $state(false);
   let code = $state(['', '', '', '', '', '']);
   let codeInputs: HTMLInputElement[] = [];
 
@@ -38,6 +42,8 @@
     .catch(() => (accounts = []));
 
   const submit = action();
+  const verifyOtp = action();
+  const resendOtp = action();
   const isStaff = $derived(who === 'staff');
   const registering = $derived(mode === 'register' && !isStaff);
   const roleAccounts = $derived(
@@ -60,6 +66,7 @@
   function pickRole(key: Who) {
     who = key;
     if (key === 'staff') mode = 'signin';
+    pendingEmail = '';
     submit.clear();
   }
 
@@ -69,8 +76,8 @@
     return PORTAL_FOR_ROLE[user.role];
   }
 
-  async function finish(user: SessionUser) {
-    signIn(user);
+  async function finish(user: SessionUser, token?: string | null) {
+    signIn(user, token ?? undefined);
     if (registering && useMfa) {
       await api.patch(user.role === 'OWNER' ? '/owner/profile' : '/client/profile', { mfaEnabled: true }).catch(() => undefined);
     }
@@ -79,6 +86,7 @@
 
   async function onSubmit(e: SubmitEvent) {
     e.preventDefault();
+    let loginToken: string | undefined;
     const user = await submit.run(async () => {
       if (registering) {
         const body: RegisterBody = {
@@ -95,10 +103,30 @@
                 maxRent: Number(reg.maxRent.replace(/\D/g, '')) || undefined
               })
         };
-        const { user } = await api.post<{ user: SessionUser }>('/auth/register', body);
+        const result = await api.post<{ user: SessionUser; token?: string }>('/auth/register', body);
+        loginToken = result.token;
+        const user = result.user;
         return { ...user, mfaEnabled: useMfa };
       }
-      const { user } = await api.post<{ user: SessionUser }>('/auth/demo-login', { email: email.trim() });
+      const response = await api.post<{ user?: SessionUser; token?: string; otpRequired?: boolean; destination?: string }>(
+        '/auth/demo-login',
+        { email: email.trim(), accountType: who }
+      );
+      if (response.otpRequired) {
+        pendingEmail = email.trim().toLowerCase();
+        otpDestination = response.destination ?? 'your registered email';
+        pending = null;
+        pendingToken = null;
+        otpResent = false;
+        code = ['', '', '', '', '', ''];
+        step = 'mfa';
+        await tick();
+        codeInputs[0]?.focus();
+        return null;
+      }
+      const user = response.user;
+      if (!user) throw new Error('The sign-in response was incomplete. Try again.');
+      loginToken = response.token;
       const expected = who === 'client' ? ['CLIENT'] : who === 'owner' ? ['OWNER'] : Object.keys(ROLE_LABEL).filter((r) => r !== 'CLIENT' && r !== 'OWNER');
       if (!expected.includes(user.role)) {
         throw new Error(`That account is a ${ROLE_LABEL[user.role].toLowerCase()} account. Choose the ${ROLE_LABEL[user.role].split(' ')[0]} tab to sign in with it.`);
@@ -108,11 +136,12 @@
     if (!user) return;
     if (isStaff || user.mfaEnabled) {
       pending = user;
+      pendingToken = loginToken ?? null;
       step = 'mfa';
       await tick();
       codeInputs[0]?.focus();
     } else {
-      await finish(user);
+      await finish(user, loginToken);
     }
   }
 
@@ -145,7 +174,29 @@
       return;
     }
     codeError = null;
-    if (pending) await finish({ ...pending, mfaEnabled: true });
+    if (pendingEmail) {
+      const result = await verifyOtp.run(() =>
+        api.post<{ user: SessionUser; token?: string }>('/auth/staff-otp/verify', { email: pendingEmail, code: code.join('') })
+      );
+      if (result) await finish(result.user, result.token);
+    } else if (pending) {
+      await finish({ ...pending, mfaEnabled: true }, pendingToken);
+    }
+  }
+
+  async function resendStaffOtp() {
+    if (!pendingEmail) return;
+    const result = await resendOtp.run(() =>
+      api.post<{ sent: boolean; destination: string }>('/auth/staff-otp/resend', { email: pendingEmail })
+    );
+    if (result) {
+      otpDestination = result.destination;
+      otpResent = true;
+      code = ['', '', '', '', '', ''];
+      codeError = null;
+      await tick();
+      codeInputs[0]?.focus();
+    }
   }
 </script>
 
@@ -195,7 +246,11 @@
             {#if roleAccounts.length}
               <div class="dev">
                 <p>
-                  Development mode: Clerk is not configured, so seeded accounts sign in by email without a password. Pick one:
+                  {#if isStaff}
+                    Choose a staff account. A one-time verification code will be emailed before sign-in.
+                  {:else}
+                    Development mode: seeded client and owner accounts sign in by email without a password. Pick one:
+                  {/if}
                 </p>
                 <div class="chips">
                   {#each roleAccounts as a (a.id)}
@@ -266,10 +321,15 @@
         </form>
       {:else}
         <h2 class="form-title">Enter verification code</h2>
-        <p class="form-sub">
-          A 6-digit code goes to the phone on your account. Development mode: Clerk is not configured, so any six digits are
-          accepted.
-        </p>
+        {#if pendingEmail}
+          <p class="form-sub">Enter the six-digit code sent to {otpDestination}. The code expires in 10 minutes.</p>
+          {#if otpResent}<p class="form-sub" role="status">A new code has been sent.</p>{/if}
+        {:else}
+          <p class="form-sub">
+            A 6-digit code goes to the phone on your account. Development mode: Clerk is not configured, so any six digits are
+            accepted.
+          </p>
+        {/if}
         <form onsubmit={verify} novalidate>
           <div class="code" role="group" aria-label="Verification code">
             {#each code as digit, i}
@@ -286,13 +346,27 @@
             {/each}
           </div>
           {#if codeError}<p class="form-error" role="alert">{codeError}</p>{/if}
-          <button type="submit" class="btn btn-primary btn-block verify">Verify and continue</button>
+          {#if verifyOtp.error}<p class="form-error" role="alert">{verifyOtp.error}</p>{/if}
+          <button type="submit" class="btn btn-primary btn-block verify" disabled={verifyOtp.busy}>
+            {verifyOtp.busy ? 'Verifying…' : 'Verify and continue'}
+          </button>
+          {#if pendingEmail}
+            {#if resendOtp.error}<p class="form-error" role="alert">{resendOtp.error}</p>{/if}
+            <button type="button" class="btn-quiet btn" onclick={resendStaffOtp} disabled={resendOtp.busy}>
+              {resendOtp.busy ? 'Sending…' : 'Resend code'}
+            </button>
+          {/if}
           <div class="code-foot">
             <button
               type="button"
               class="btn-quiet btn"
               onclick={() => {
                 step = 'form';
+                pendingEmail = '';
+                pending = null;
+                pendingToken = null;
+                verifyOtp.clear();
+                resendOtp.clear();
                 code = ['', '', '', '', '', ''];
               }}>Back</button
             >

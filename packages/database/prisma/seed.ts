@@ -30,6 +30,21 @@ const METRIC_NOTE: Record<MetricKey, string> = {
 
 const BRANCH_LABEL: Record<BranchName, string> = { Male: 'Branch 1', Hulhumale: 'Branch 2', Villingili: 'Branch 3' };
 
+const LISTING_PHOTOS = [
+  {
+    url: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c4/Apartment_Blocks_-_Hulhumale_-_Maldives_%2814111148798%29.jpg/1280px-Apartment_Blocks_-_Hulhumale_-_Maldives_%2814111148798%29.jpg',
+    caption: 'Representative Maldives apartment photography · Apartment blocks, Hulhumalé'
+  },
+  {
+    url: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0f/Detail_of_Apartment_Blocks_-_Hulhumale_-_Maldives_%2814295828132%29.jpg/1280px-Detail_of_Apartment_Blocks_-_Hulhumale_-_Maldives_%2814295828132%29.jpg',
+    caption: 'Representative Maldives apartment photography · Apartment detail, Hulhumalé'
+  },
+  {
+    url: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a9/Architecture_-_Hulhumale_-_Maldives_%2814295830842%29.jpg/1280px-Architecture_-_Hulhumale_-_Maldives_%2814295830842%29.jpg',
+    caption: 'Representative Maldives apartment photography · Architecture, Hulhumalé'
+  }
+];
+
 async function wipe() {
   // Children before parents.
   await prisma.leaseSignature.deleteMany();
@@ -190,7 +205,7 @@ async function main() {
     const row = await prisma.property.create({
       data: {
         title: p.title,
-        description: `${words[p.rooms]}-room ${p.type.toLowerCase()} on ${p.goalhi}, ${area === 'Villingili' ? 'Villingili' : area}.`,
+        description: `${words[p.rooms]}-room ${p.type.toLowerCase()} in ${area === 'Villingili' ? 'Villingili' : area}, located on ${p.goalhi}. Ask the Housing_4_Raajje team about the layout, viewing times and current availability.`,
         location: p.district,
         address: `${p.house}, ${p.goalhi}`,
         district: p.district,
@@ -203,6 +218,9 @@ async function main() {
         ownerId: users[p.owner],
         branchId: branch[b],
         createdAt: p.createdAt,
+        images: {
+          create: [LISTING_PHOTOS[(p.title.length + p.rooms) % LISTING_PHOTOS.length]]
+        },
         history: { create: { status: p.status, reason: 'Seeded state', createdAt: p.createdAt } }
       }
     });

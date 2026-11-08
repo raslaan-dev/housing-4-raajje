@@ -121,11 +121,15 @@ CLERK_PUBLISHABLE_KEY=your_publishable_key
 CLERK_WEBHOOK_SECRET=your_webhook_secret
 DATABASE_URL="file:./dev.db"
 RESEND_API_KEY=your_resend_key
+RESEND_FROM="Housing_4_Raajje <verified-sender@example.com>"
+STAFF_OTP_EMAIL=your_staff_otp_mailbox@example.com
+STAFF_OTP_SECRET=generate_a_random_secret_at_least_32_characters
 APP_URL=http://localhost:5173
 PUBLIC_API_BASE=http://localhost:4000/api
 ```
 
 > Clerk and Resend are required for production deployment, but local development can use placeholder values if needed for testing configuration.
+> Keep real email addresses, Resend keys and `STAFF_OTP_SECRET` in ignored local `.env` or Cloudflare environment settings. Do not commit personal addresses or secrets.
 
 ## Testing
 
@@ -151,7 +155,7 @@ The seed holds the three branches, 8 staff, 4 owners, clients, 15 properties (2 
 
 ## Demo accounts
 
-Clerk is not configured in local development, so seeded accounts sign in by email without a password. The sign-in page lists them. The two-step verification step accepts any six digits in this mode, and the screen says so.
+Clerk is not configured in local development. Seeded client and owner accounts sign in by email without a password. Seeded staff accounts require an email OTP: configure `STAFF_OTP_EMAIL`, `STAFF_OTP_SECRET`, `RESEND_API_KEY` and a verified `RESEND_FROM` in your local environment first. OTP codes are verified server-side and never stored in plain text.
 
 | Role | Email |
 | --- | --- |
@@ -161,6 +165,8 @@ Clerk is not configured in local development, so seeded accounts sign in by emai
 | Branch manager | `hassan.zameel@housing-4-raajje.test` |
 | Property specialist | `ahmed.afzal@housing-4-raajje.test` |
 | Receptionist | `mariyam.leena@housing-4-raajje.test` |
+
+For local development and preview, `STAFF_OTP_EMAIL` may point all seeded staff OTPs to one mailbox while each account retains its unique `.test` login email. Do not put a personal mailbox address or OTP secret in committed files. Generate a random secret of at least 32 characters and configure it in the local `.env` or as a Cloudflare secret for the preview Worker. Apply API migration `0002_staff_otp_challenges.sql` before using staff OTP.
 
 ## What the web app covers
 
