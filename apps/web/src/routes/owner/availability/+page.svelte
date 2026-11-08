@@ -29,6 +29,12 @@
   let pending = $state<{ unit: OwnerUnit; target: Target } | null>(null);
   let blocked = $state<OwnerUnit | null>(null);
   const change = action();
+  const sign = action();
+
+  async function signLease(leaseId: string) {
+    const updated = await sign.run(() => api.post<OwnerOverview>(`/owner/leases/${leaseId}/sign`));
+    if (updated) overview.set(updated);
+  }
 
   function ask(unit: OwnerUnit, target: Target) {
     if (unit.status === target) return;
@@ -89,7 +95,9 @@
                 >
               {/each}
             </div>
-            <p class="caption">{CAPTION[u.status] ?? ''}</p>
+            <p class="caption">
+              {u.lease?.status === 'AWAITING_SIGNATURE' ? 'Lease awaiting signatures. Removed from new client enquiries.' : (CAPTION[u.status] ?? '')}
+            </p>
           </div>
         </div>
 
@@ -134,7 +142,20 @@
                 </div>
               {/if}
             </div>
-            {#if locked}
+            {#if l.status === 'AWAITING_SIGNATURE'}
+              <div class="ledger-foot sign-row">
+                <p>
+                  Client {l.clientSigned ? 'has signed' : 'has not signed yet'} · You {l.ownerSigned ? 'have signed' : 'have not signed yet'}.
+                  The lease becomes active once both of you have signed.
+                </p>
+                {#if !l.ownerSigned}
+                  <button type="button" class="btn btn-primary btn-sm" onclick={() => signLease(l.id)} disabled={sign.busy}>
+                    {sign.busy ? 'Signing…' : 'Sign lease'}
+                  </button>
+                {/if}
+              </div>
+              {#if sign.error}<p class="form-error" role="alert">{sign.error}</p>{/if}
+            {:else if locked}
               <p class="ledger-foot">Cannot be set to Available while this contract is active.</p>
             {/if}
           </div>
@@ -364,6 +385,16 @@
     border-top: 1px solid var(--line-soft);
     font-size: 12px;
     color: var(--muted);
+  }
+
+  .sign-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 20px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--ink-soft);
   }
 
   .confirm {
