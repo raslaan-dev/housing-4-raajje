@@ -55,7 +55,16 @@ const clientUser = {
   ...staffUser,
   id: 'client-1',
   email: 'client@housing-4-raajje.test',
+  mfaEnabled: false,
   role: { name: 'CLIENT' }
+};
+
+const twoStepOwner = {
+  ...staffUser,
+  id: 'owner-1',
+  email: 'owner.two.step@example.com',
+  mfaEnabled: true,
+  role: { name: 'OWNER' }
 };
 
 let challenge: Record<string, unknown> | null;
@@ -86,7 +95,7 @@ beforeEach(() => {
   challenge = null;
   vi.resetAllMocks();
   userFindUnique.mockImplementation(({ where }: { where: { email: string } }) =>
-    Promise.resolve(where.email === staffUser.email ? staffUser : where.email === clientUser.email ? clientUser : null)
+    Promise.resolve([staffUser, clientUser, twoStepOwner].find((u) => u.email === where.email) ?? null)
   );
   challengeFindUnique.mockImplementation(() => Promise.resolve(challenge));
   challengeCreate.mockImplementation(({ data }: { data: Record<string, unknown> }) => {
@@ -168,6 +177,37 @@ describe('staff email OTP', () => {
       expect(await response.json()).toMatchObject({ user: { id: clientUser.id, role: 'CLIENT' } });
       expect(sendEmail).not.toHaveBeenCalled();
       expect(challengeCreate).not.toHaveBeenCalled();
+    });
+  });
+
+  it('emails owners with two-step verification at their own address and checks the code', async () => {
+    await withAuthServer(async (baseUrl) => {
+      const login = await fetch(`${baseUrl}/demo-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: twoStepOwner.email, accountType: 'owner' })
+      });
+      const emailArgs = sendEmail.mock.calls[0][0] as { to: string; text: string };
+      const code = emailArgs.text.match(/\b(\d{6})\b/)?.[1];
+
+      expect(login.status).toBe(200);
+      expect(await login.json()).toMatchObject({ otpRequired: true });
+      expect(emailArgs.to).toBe(twoStepOwner.email);
+
+      const wrong = await fetch(`${baseUrl}/otp/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: twoStepOwner.email, code: code === '000000' ? '111111' : '000000' })
+      });
+      expect(wrong.status).toBe(401);
+
+      const right = await fetch(`${baseUrl}/otp/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: twoStepOwner.email, code })
+      });
+      expect(right.status).toBe(200);
+      expect(await right.json()).toMatchObject({ user: { id: twoStepOwner.id, role: 'OWNER' } });
     });
   });
 

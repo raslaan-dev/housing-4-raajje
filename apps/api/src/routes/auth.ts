@@ -75,7 +75,7 @@ router.post(
       throw new HttpError(400, `That account is a ${actualAccountType} account. Choose the matching sign-in tab.`);
     }
 
-    if (isStaff) {
+    if (isStaff || user.mfaEnabled) {
       const destination = await issueStaffOtp(user.id, user.email);
       res.json({ otpRequired: true, destination });
       return;
@@ -91,36 +91,32 @@ router.post(
 const staffOtpRequestSchema = z.object({ email: z.string().trim().toLowerCase().email() });
 const staffOtpVerifySchema = staffOtpRequestSchema.extend({ code: z.string().regex(/^\d{6}$/, 'Enter the six-digit code.') });
 
-async function findActiveStaff(email: string) {
+/** Accounts that sign in with an emailed code: all staff, plus clients and owners who turned on two-step verification. */
+async function findOtpUser(email: string) {
   const user = await prisma.user.findUnique({ where: { email }, include: userInclude });
-  if (
-    !user ||
-    user.status !== 'ACTIVE' ||
-    !user.role ||
-    !['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'PROPERTY_SPECIALIST', 'RECEPTIONIST'].includes(user.role.name)
-  ) {
-    throw new HttpError(404, 'Staff account not found.');
+  if (!user || user.status !== 'ACTIVE' || !user.role || !(STAFF_ROLES.includes(user.role.name as never) || user.mfaEnabled)) {
+    throw new HttpError(404, 'Account not found.');
   }
   return user;
 }
 
 router.post(
-  '/staff-otp/resend',
+  ['/otp/resend', '/staff-otp/resend'],
   asyncHandler(async (req, res) => {
     assertDemoEnabled();
     const { email } = staffOtpRequestSchema.parse(req.body ?? {});
-    const user = await findActiveStaff(email);
+    const user = await findOtpUser(email);
     const destination = await issueStaffOtp(user.id, user.email);
     res.json({ sent: true, destination });
   })
 );
 
 router.post(
-  '/staff-otp/verify',
+  ['/otp/verify', '/staff-otp/verify'],
   asyncHandler(async (req, res) => {
     assertDemoEnabled();
     const { email, code } = staffOtpVerifySchema.parse(req.body ?? {});
-    const user = await findActiveStaff(email);
+    const user = await findOtpUser(email);
     await verifyStaffOtp(user.id, code);
     const body: { user: SessionUser; token?: string } = { user: toSessionUser(user) };
     const token = issueDemoSessionToken(user);
@@ -142,7 +138,8 @@ const registerSchema = z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD')
       .optional(),
-    maxRent: z.number().int().positive().max(1_000_000).optional()
+    maxRent: z.number().int().positive().max(1_000_000).optional(),
+    mfaEnabled: z.boolean().optional()
   })
   .superRefine((v, ctx) => {
     if (v.role === 'OWNER' && !v.nationalId) ctx.addIssue({ code: 'custom', path: ['nationalId'], message: 'National ID is required for owners' });
@@ -167,6 +164,7 @@ router.post(
         phone: body.phone,
         roleId: role.id,
         status: 'ACTIVE',
+        mfaEnabled: body.mfaEnabled ?? false,
         ...(body.role === 'CLIENT'
           ? {
               clientProfile: {
@@ -184,6 +182,13 @@ router.post(
 
     await audit(user.id, 'user.registered', 'User', user.id, `Registered ${body.role === 'CLIENT' ? 'client' : 'owner'} account ${code}`, 'All');
     await notify(user.id, 'WELCOME', 'Welcome to Housing_4_Raajje', `Your ${body.role === 'CLIENT' ? 'client' : 'owner'} account ${code} is ready.`, 'Email');
+
+    if (user.mfaEnabled) {
+      // No session until the emailed code is verified through /otp/verify.
+      const destination = await issueStaffOtp(user.id, user.email);
+      res.status(201).json({ otpRequired: true, destination });
+      return;
+    }
 
     const out: { user: SessionUser; token?: string } = { user: toSessionUser(user) };
     const token = issueDemoSessionToken(user);

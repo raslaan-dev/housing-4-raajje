@@ -68,6 +68,7 @@ export type RegisterBody = {
   sex?: 'Female' | 'Male'; // client
   dateOfBirth?: string; // client, YYYY-MM-DD
   maxRent?: number; // client
+  mfaEnabled?: boolean; // email a sign-in code instead of opening a session straight away
 };
 
 /* ---------- Client ---------- */
