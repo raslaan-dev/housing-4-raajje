@@ -16,9 +16,27 @@ const router = Router();
 
 const ROLE_ORDER: RoleName[] = ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'PROPERTY_SPECIALIST', 'RECEPTIONIST', 'OWNER', 'CLIENT'];
 
+/** The seeded-account picker and code-free client/owner sign-in: local development and configured preview only. */
+function demoEnabled() {
+  return process.env.NODE_ENV === 'development' || (process.env.NODE_ENV === 'preview' && process.env.DEMO_LOGIN === 'true');
+}
+
 function assertDemoEnabled() {
-  const enabled = process.env.NODE_ENV === 'development' || (process.env.NODE_ENV === 'preview' && process.env.DEMO_LOGIN === 'true');
-  if (!enabled) throw new HttpError(404, 'Not found.');
+  if (!demoEnabled()) throw new HttpError(404, 'Not found.');
+}
+
+/** Email sign-in runs wherever the demo does, and in production, where every account must verify an emailed code. */
+function emailSignInEnabled() {
+  return demoEnabled() || process.env.NODE_ENV === 'production';
+}
+
+function assertEmailSignInEnabled() {
+  if (!emailSignInEnabled()) throw new HttpError(404, 'Not found.');
+}
+
+/** Staff and two-step accounts always need an emailed code; in production every account does. */
+function needsEmailCode(user: { mfaEnabled: boolean; role: { name: string } | null }) {
+  return process.env.NODE_ENV === 'production' || STAFF_ROLES.includes(user.role?.name as never) || user.mfaEnabled;
 }
 
 router.get('/me', requireAuth, (req, res) => {
@@ -58,9 +76,9 @@ router.get(
 );
 
 router.post(
-  '/demo-login',
+  ['/login', '/demo-login'],
   asyncHandler(async (req, res) => {
-    assertDemoEnabled();
+    assertEmailSignInEnabled();
     const { email, accountType } = z.object({
       email: z.string().email(),
       accountType: z.enum(['client', 'owner', 'staff']).optional()
@@ -75,7 +93,7 @@ router.post(
       throw new HttpError(400, `That account is a ${actualAccountType} account. Choose the matching sign-in tab.`);
     }
 
-    if (isStaff || user.mfaEnabled) {
+    if (needsEmailCode(user)) {
       const destination = await issueStaffOtp(user.id, user.email);
       res.json({ otpRequired: true, destination });
       return;
@@ -91,10 +109,10 @@ router.post(
 const staffOtpRequestSchema = z.object({ email: z.string().trim().toLowerCase().email() });
 const staffOtpVerifySchema = staffOtpRequestSchema.extend({ code: z.string().regex(/^\d{6}$/, 'Enter the six-digit code.') });
 
-/** Accounts that sign in with an emailed code: all staff, plus clients and owners who turned on two-step verification. */
+/** Accounts that sign in with an emailed code (see needsEmailCode). */
 async function findOtpUser(email: string) {
   const user = await prisma.user.findUnique({ where: { email }, include: userInclude });
-  if (!user || user.status !== 'ACTIVE' || !user.role || !(STAFF_ROLES.includes(user.role.name as never) || user.mfaEnabled)) {
+  if (!user || user.status !== 'ACTIVE' || !user.role || !needsEmailCode(user)) {
     throw new HttpError(404, 'Account not found.');
   }
   return user;
@@ -103,7 +121,7 @@ async function findOtpUser(email: string) {
 router.post(
   ['/otp/resend', '/staff-otp/resend'],
   asyncHandler(async (req, res) => {
-    assertDemoEnabled();
+    assertEmailSignInEnabled();
     const { email } = staffOtpRequestSchema.parse(req.body ?? {});
     const user = await findOtpUser(email);
     const destination = await issueStaffOtp(user.id, user.email);
@@ -114,7 +132,7 @@ router.post(
 router.post(
   ['/otp/verify', '/staff-otp/verify'],
   asyncHandler(async (req, res) => {
-    assertDemoEnabled();
+    assertEmailSignInEnabled();
     const { email, code } = staffOtpVerifySchema.parse(req.body ?? {});
     const user = await findOtpUser(email);
     await verifyStaffOtp(user.id, code);
@@ -183,7 +201,7 @@ router.post(
     await audit(user.id, 'user.registered', 'User', user.id, `Registered ${body.role === 'CLIENT' ? 'client' : 'owner'} account ${code}`, 'All');
     await notify(user.id, 'WELCOME', 'Welcome to Housing_4_Raajje', `Your ${body.role === 'CLIENT' ? 'client' : 'owner'} account ${code} is ready.`, 'Email');
 
-    if (user.mfaEnabled) {
+    if (needsEmailCode(user) && emailSignInEnabled()) {
       // No session until the emailed code is verified through /otp/verify.
       const destination = await issueStaffOtp(user.id, user.email);
       res.status(201).json({ otpRequired: true, destination });

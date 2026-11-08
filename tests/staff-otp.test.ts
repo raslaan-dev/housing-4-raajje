@@ -165,6 +165,33 @@ describe('staff email OTP', () => {
     });
   });
 
+  it('requires an emailed code from every account in production and returns a signed session', async () => {
+    process.env.NODE_ENV = 'production';
+    await withAuthServer(async (baseUrl) => {
+      const accounts = await fetch(`${baseUrl}/demo-accounts`);
+      expect(accounts.status).toBe(404);
+
+      const login = await fetch(`${baseUrl}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: clientUser.email, accountType: 'client' })
+      });
+      expect(login.status).toBe(200);
+      expect(await login.json()).toMatchObject({ otpRequired: true });
+      const code = (sendEmail.mock.calls[0][0] as { text: string }).text.match(/\b(\d{6})\b/)?.[1];
+
+      const verification = await fetch(`${baseUrl}/otp/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: clientUser.email, code })
+      });
+      expect(verification.status).toBe(200);
+      const body = (await verification.json()) as { user: { id: string }; token?: string };
+      expect(body.user.id).toBe(clientUser.id);
+      expect(body.token).toMatch(/^h4rdemo\./);
+    });
+  });
+
   it('does not email client accounts', async () => {
     await withAuthServer(async (baseUrl) => {
       const response = await fetch(`${baseUrl}/demo-login`, {

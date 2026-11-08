@@ -19,7 +19,7 @@ afterEach(() => {
 });
 
 describe('demo sign-in endpoints', () => {
-  it('returns 404 for both demo endpoints in production even when the flag is enabled', async () => {
+  it('hides the demo account picker in production even when the flag is enabled', async () => {
     process.env.NODE_ENV = 'production';
     process.env.DEMO_LOGIN = 'true';
 
@@ -34,17 +34,10 @@ describe('demo sign-in endpoints', () => {
     try {
       const address = server.address();
       if (!address || typeof address === 'string') throw new Error('Expected an HTTP server address.');
-      const baseUrl = `http://127.0.0.1:${address.port}/api/auth`;
+      const response = await fetch(`http://127.0.0.1:${address.port}/api/auth/demo-accounts`);
 
-      const accountsResponse = await fetch(`${baseUrl}/demo-accounts`);
-      const loginResponse = await fetch(`${baseUrl}/demo-login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'admin@example.com' })
-      });
-
-      expect(accountsResponse.status).toBe(404);
-      expect(loginResponse.status).toBe(404);
+      expect(response.status).toBe(404);
+      expect(findMany).not.toHaveBeenCalled();
     } finally {
       await new Promise<void>((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
     }
