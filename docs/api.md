@@ -31,7 +31,7 @@ Every mutation writes an `AuditLog` row (`metadata = { description, branch }`) a
 | POST | `/register` | `RegisterBody` | 201 `{ user: SessionUser, token? }`; 409 if the email exists. Creates CLIENT or OWNER only. |
 | GET | `/me` | – | the authenticated request user |
 
-Demo login and OTP routes are enabled only in local development or configured preview; they return 404 in production.
+`/demo-accounts` is enabled only in local development or configured preview and returns 404 in production. `/login` (alias `/demo-login`) and the `/otp/*` routes also run in production, where every account must verify an emailed code before it receives a signed session token. `/staff-otp/*` remain as aliases of `/otp/*`.
 
 ## Public listings `/api/properties`
 

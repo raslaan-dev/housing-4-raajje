@@ -2,6 +2,8 @@ import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { HttpError } from './http.js';
 
 const SESSION_LIFETIME_SECONDS = 8 * 60 * 60;
+// Signed bearer sessions after email sign-in. Local development uses identity headers instead.
+const SESSION_ENVS = ['preview', 'production'];
 const STAFF_ROLES = ['SYSTEM_ADMIN', 'BRANCH_MANAGER', 'PROPERTY_SPECIALIST', 'RECEPTIONIST'];
 const ALL_ROLES = [...STAFF_ROLES, 'CLIENT', 'OWNER'];
 
@@ -23,7 +25,7 @@ type DemoSessionUser = {
 
 function signingSecret() {
   const secret = process.env.RESEND_API_KEY;
-  if (!secret || secret.length < 32) throw new HttpError(503, 'Preview sign-in is not configured.');
+  if (!secret || secret.length < 32) throw new HttpError(503, 'Sign-in is not configured.');
   return secret;
 }
 
@@ -32,7 +34,7 @@ function signature(input: string) {
 }
 
 export function issueDemoSessionToken(user: DemoSessionUser): string | undefined {
-  if (process.env.NODE_ENV !== 'preview') return undefined;
+  if (!SESSION_ENVS.includes(process.env.NODE_ENV ?? '')) return undefined;
   const payload: DemoSessionPayload = {
     sub: user.id,
     email: user.email,
@@ -49,7 +51,7 @@ export function issueDemoSessionToken(user: DemoSessionUser): string | undefined
 }
 
 export function verifyDemoSessionToken(token: string): DemoSessionPayload | null {
-  if (process.env.NODE_ENV !== 'preview') return null;
+  if (!SESSION_ENVS.includes(process.env.NODE_ENV ?? '')) return null;
   const [prefix, encoded, suppliedSignature, ...rest] = token.split('.');
   if (prefix !== 'h4rdemo' || !encoded || !suppliedSignature || rest.length > 0) return null;
 

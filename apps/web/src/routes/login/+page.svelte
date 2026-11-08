@@ -121,7 +121,7 @@
         loginToken = result.token;
         return result.user;
       }
-      const response = await api.post<AuthResponse>('/auth/demo-login', { email: email.trim(), accountType: who });
+      const response = await api.post<AuthResponse>('/auth/login', { email: email.trim(), accountType: who });
       if (response.otpRequired) {
         await startOtp(email, response.destination);
         return null;
