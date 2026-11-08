@@ -4,7 +4,7 @@ import type { DemoAccount, RoleName, SessionUser } from '@housing/shared';
 import { requireAuth } from '../middleware/auth.js';
 import { prisma } from '../lib/prisma.js';
 import { asyncHandler, HttpError } from '../lib/http.js';
-import { toSessionUser, userInclude } from '../lib/serialize.js';
+import { STAFF_ROLES, toSessionUser, userInclude } from '../lib/serialize.js';
 import { nextUserCode } from '../lib/codes.js';
 import { audit } from '../lib/audit.js';
 import { notify } from '../lib/notify.js';
@@ -28,7 +28,7 @@ router.get('/me', requireAuth, (req, res) => {
   });
 });
 
-/** Seeded accounts shown in the local sign-in picker (at least one per role). Disabled in production. */
+/** Accounts shown in the demo sign-in picker: every active staff account plus the seeded client and owner. Disabled in production. */
 const DEMO_EMAILS = [
   'shiham.ali@housing-4-raajje.test',
   'hassan.zameel@housing-4-raajje.test',
@@ -45,7 +45,10 @@ router.get(
   '/demo-accounts',
   asyncHandler(async (_req, res) => {
     assertDemoEnabled();
-    const users = await prisma.user.findMany({ where: { email: { in: DEMO_EMAILS } }, include: userInclude });
+    const users = await prisma.user.findMany({
+      where: { status: 'ACTIVE', OR: [{ email: { in: DEMO_EMAILS } }, { role: { name: { in: STAFF_ROLES } } }] },
+      include: userInclude
+    });
     const accounts: DemoAccount[] = users
       .map(toSessionUser)
       .sort((a, b) => ROLE_ORDER.indexOf(a.role) - ROLE_ORDER.indexOf(b.role) || (a.branch?.number ?? 0) - (b.branch?.number ?? 0))

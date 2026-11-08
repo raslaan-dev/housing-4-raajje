@@ -622,7 +622,7 @@ router.get(
       prisma.lease.count({ where: { executedAt: range, ...viaProperty(scope) } }),
       prisma.payment.findMany({ where: { month, status: 'PAID', ...(scope.branchId ? { lease: { property: { branchId: scope.branchId } } } : {}) } }),
       prisma.user.findMany({
-        where: { role: { name: { in: STAFF_ROLES } }, ...scope.where },
+        where: { status: 'ACTIVE', role: { name: { in: STAFF_ROLES } }, ...scope.where },
         include: { role: true },
         orderBy: { code: 'asc' }
       })
@@ -683,7 +683,7 @@ router.get(
   asyncHandler(async (req, res) => {
     const scope = await resolveScope(req);
     const rows = await prisma.user.findMany({
-      where: { role: { name: { in: STAFF_ROLES } }, ...scope.where },
+      where: { status: 'ACTIVE', role: { name: { in: STAFF_ROLES } }, ...scope.where },
       include: accountInclude,
       orderBy: { code: 'asc' }
     });
@@ -735,6 +735,58 @@ router.post(
 
     const out: StaffAccount = toStaffAccount(user);
     res.status(201).json(out);
+  })
+);
+
+/**
+ * Removes a staff account. Accounts with no work on record are deleted outright; accounts that appear in
+ * audit, viewing, lease, maintenance, message or inquiry history are deactivated instead so that history keeps
+ * its references, and their email is released so the same person can be provisioned again.
+ */
+router.delete(
+  '/accounts/:id',
+  authorize('SYSTEM_ADMIN'),
+  asyncHandler(async (req, res) => {
+    const id = param(req, 'id');
+    if (id === req.user!.id) throw new HttpError(400, 'You cannot delete your own account.');
+    const user = await prisma.user.findUnique({ where: { id }, include: accountInclude });
+    if (!user || user.status !== 'ACTIVE' || !user.role || !STAFF_ROLES.includes(user.role.name as StaffRole)) {
+      throw new HttpError(404, 'Staff account not found.');
+    }
+    if (user.role.name === 'SYSTEM_ADMIN') {
+      const admins = await prisma.user.count({ where: { status: 'ACTIVE', role: { name: 'SYSTEM_ADMIN' } } });
+      if (admins <= 1) throw new HttpError(400, 'Keep at least one system admin account.');
+    }
+
+    const counts = await Promise.all([
+      prisma.auditLog.count({ where: { actorId: id } }),
+      prisma.propertyNote.count({ where: { userId: id } }),
+      prisma.viewing.count({ where: { staffId: id } }),
+      prisma.lease.count({ where: { executingStaffId: id } }),
+      prisma.maintenanceRequest.count({ where: { assignedStaffId: id } }),
+      prisma.message.count({ where: { OR: [{ senderId: id }, { recipientId: id }] } }),
+      prisma.inquiry.count({ where: { routedToId: id } })
+    ]);
+    const hasHistory = counts.some((n) => n > 0);
+
+    // Sequential writes rather than $transaction: D1 does not support interactive transactions.
+    await prisma.staffOtpChallenge.deleteMany({ where: { userId: id } });
+    await prisma.notification.deleteMany({ where: { userId: id } });
+    if (hasHistory) {
+      await prisma.user.update({ where: { id }, data: { status: 'INACTIVE', email: `removed+${id}@housing-4-raajje.test` } });
+    } else {
+      await prisma.staffProfile.deleteMany({ where: { userId: id } });
+      await prisma.user.delete({ where: { id } });
+    }
+    await audit(
+      req.user!.id,
+      'staff.deleted',
+      'User',
+      hasHistory ? id : null,
+      `${hasHistory ? 'Deactivated' : 'Deleted'} staff account ${user.code ?? ''} (${fullName(user)})`,
+      branchLabel(user.branch)
+    );
+    res.json({ id, removed: hasHistory ? 'deactivated' : 'deleted' });
   })
 );
 
