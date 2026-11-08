@@ -1,0 +1,28 @@
+
+ RUN  v2.1.9 /home/claude/h4r
+
+ ✓ tests/staff-otp.test.ts > staff email OTP > emails a code to the configured shared mailbox and requires server-side verification
+ ✓ tests/staff-otp.test.ts > staff email OTP > does not email client accounts
+ ✓ tests/staff-otp.test.ts > staff email OTP > enforces the resend cooldown
+ ✓ tests/staff-otp.test.ts > staff email OTP > rejects an incorrect code and increments the attempt count
+ ✓ tests/staff-otp.test.ts > staff email OTP > locks the code after five incorrect attempts
+ ✓ tests/auth.test.ts > requireAuth > rejects an invalid bearer token without falling back to caller identity headers
+ ✓ tests/auth.test.ts > requireAuth > uses only claims from a verified Clerk token
+ ✓ tests/auth.test.ts > requireAuth > accepts identity headers only in explicit development mode
+ ✓ tests/auth.test.ts > requireAuth > retains development header authentication in explicit development mode
+ ✓ tests/auth.test.ts > requireAuth > accepts signed preview demo sessions and rejects forged session tokens
+ ✓ tests/payment-production.test.ts > production payment routes > refuses simulated client payments without writing a payment record
+ ✓ tests/payment-production.test.ts > production payment routes > hides legacy payment list and write endpoints in production
+ ✓ tests/demo-login.test.ts > demo sign-in endpoints > returns 404 for both demo endpoints in production even when the flag is enabled
+ ✓ tests/demo-login.test.ts > demo sign-in endpoints > allows demo sign-in in configured preview
+ ✓ tests/matching.test.ts > matching logic > matches a property when rent and location are within the client preference
+ ✓ tests/matching.test.ts > matching logic > excludes properties outside the maximum rent preference
+ ✓ tests/lease-rules.test.ts > lease and rent rules > calculates expiry after a fixed tenure
+ ✓ tests/lease-rules.test.ts > lease and rent rules > allows activation only after both signatures are present
+ ✓ tests/lease-rules.test.ts > lease and rent rules > respects maximum rent preference
+
+ Test Files  6 passed (6)
+      Tests  19 passed (19)
+   Start at  19:04:05
+   Duration  2.66s (transform 404ms, setup 0ms, collect 954ms, tests 278ms, environment 1ms, prepare 400ms)
+

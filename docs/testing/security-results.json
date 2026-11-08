@@ -1,0 +1,164 @@
+[
+  {
+    "id": "S-01",
+    "area": "Authentication",
+    "title": "Request without a session is rejected",
+    "request": "GET /api/client/me (no Authorization header)",
+    "expected": "401 Unauthorized",
+    "actual": "401 \"Authentication required.\"",
+    "status": "PASS"
+  },
+  {
+    "id": "S-02",
+    "area": "Authentication",
+    "title": "Forged / tampered session token is rejected",
+    "request": "GET /api/client/me with the client token's payload edited to role SYSTEM_ADMIN",
+    "expected": "401 Unauthorized",
+    "actual": "401 \"Invalid or expired session.\"",
+    "status": "PASS"
+  },
+  {
+    "id": "S-03",
+    "area": "Authentication",
+    "title": "Development identity headers are ignored outside development",
+    "request": "GET /api/staff/accounts with x-user-id / x-user-role: SYSTEM_ADMIN headers and no token",
+    "expected": "401 Unauthorized",
+    "actual": "401 \"Authentication required.\"",
+    "status": "PASS"
+  },
+  {
+    "id": "S-04",
+    "area": "Authentication",
+    "title": "Self-registration cannot create a staff account",
+    "request": "POST /api/auth/register { role: \"SYSTEM_ADMIN\", … }",
+    "expected": "400 – only CLIENT or OWNER allowed",
+    "actual": "400 – rejected by validation",
+    "status": "PASS"
+  },
+  {
+    "id": "S-05",
+    "area": "Authentication",
+    "title": "Registering an existing email is refused",
+    "request": "POST /api/auth/register with client@housing-4-raajje.test",
+    "expected": "409 Conflict",
+    "actual": "409 \"An account with this email already exists.\"",
+    "status": "PASS"
+  },
+  {
+    "id": "S-06",
+    "area": "RBAC",
+    "title": "Client cannot call staff endpoints",
+    "request": "GET /api/staff/queue with a CLIENT token",
+    "expected": "403 Forbidden",
+    "actual": "403 \"Forbidden: insufficient permissions.\"",
+    "status": "PASS"
+  },
+  {
+    "id": "S-07",
+    "area": "RBAC",
+    "title": "Receptionist cannot generate a lease",
+    "request": "POST /api/staff/leases with a RECEPTIONIST token",
+    "expected": "403 Forbidden",
+    "actual": "403 \"Forbidden: insufficient permissions.\"",
+    "status": "PASS"
+  },
+  {
+    "id": "S-08",
+    "area": "RBAC",
+    "title": "Specialist cannot list or create staff accounts",
+    "request": "GET /api/staff/accounts with a PROPERTY_SPECIALIST token",
+    "expected": "403 Forbidden",
+    "actual": "403 \"Forbidden: insufficient permissions.\"",
+    "status": "PASS"
+  },
+  {
+    "id": "S-09",
+    "area": "Data ownership",
+    "title": "Owner cannot change another owner's property",
+    "request": "PATCH /api/owner/properties/cmw7wlo3g00321a1er3xc58hf/status (Nirolhu Heights 5A, not theirs)",
+    "expected": "403 Forbidden",
+    "actual": "403 \"This property belongs to another owner.\"",
+    "status": "PASS"
+  },
+  {
+    "id": "S-10",
+    "area": "Branch scope",
+    "title": "Branch staff cannot widen scope with ?branch=",
+    "request": "GET /api/staff/queue?branch=Hulhumale as the Malé specialist",
+    "expected": "Only Malé items returned (parameter ignored)",
+    "actual": "200 – 1 item(s), branches: [\"Male\"]",
+    "status": "PASS"
+  },
+  {
+    "id": "S-11",
+    "area": "Branch scope",
+    "title": "Branch staff cannot approve another branch's registration",
+    "request": "POST /api/staff/queue/property/<id>/approve as the Malé specialist for a pending Villingili unit (Villingili Shore 3A)",
+    "expected": "403 Forbidden",
+    "actual": "403 \"This record belongs to another branch.\"",
+    "status": "PASS"
+  },
+  {
+    "id": "S-12",
+    "area": "Public data",
+    "title": "Unapproved listing is not visible publicly",
+    "request": "GET /api/properties/cmw7wlo5000461a1ehux6vbrh (Villingili Shore 3A, pending)",
+    "expected": "404 Not Found",
+    "actual": "404 – hidden until approved",
+    "status": "PASS"
+  },
+  {
+    "id": "S-13",
+    "area": "Legacy routes",
+    "title": "Client cannot read every application in the system",
+    "request": "GET /api/applications with a CLIENT token",
+    "expected": "403, or only the client's own applications",
+    "actual": "200 – returned 8 applications, 7 belonging to other users (with their full user records, e.g. email mariyam.saeed@housing-4-raajje.test).",
+    "status": "FAIL"
+  },
+  {
+    "id": "S-14",
+    "area": "Legacy routes",
+    "title": "Client cannot read every maintenance request and lease",
+    "request": "GET /api/maintenance and GET /api/leases with a CLIENT token",
+    "expected": "403, or only the client's own records",
+    "actual": "maintenance 200: 0 other tenants' requests; leases 200: 5 other tenants' leases (rent, deposit, client record).",
+    "status": "FAIL"
+  },
+  {
+    "id": "S-15",
+    "area": "Legacy routes",
+    "title": "Client cannot sign a lease that is not theirs",
+    "request": "PATCH /api/leases/cmw7wlo9k007p1a1esinyyx9q/sign (LSE-2026-0107, another tenant) with a CLIENT token",
+    "expected": "403 Forbidden; lease unchanged",
+    "actual": "200 – lease was ACTIVE; response clientSigned=true, status=ACTIVE. The API accepted a signature from a client who is not party to the lease.",
+    "status": "FAIL"
+  },
+  {
+    "id": "S-16",
+    "area": "Legacy routes",
+    "title": "Client cannot record a payment on someone else's lease",
+    "request": "POST /api/payments { leaseId: LSE-2026-0107, status: \"PAID\", amount: 1 } with a CLIENT token (preview)",
+    "expected": "403/404; no payment row created",
+    "actual": "201 – created payment cmw7wplur00050c1esc39ltn8 status=PAID amount=1 on LSE-2026-0107.",
+    "status": "FAIL"
+  },
+  {
+    "id": "S-17",
+    "area": "Legacy routes",
+    "title": "Client cannot book a viewing in another client's name",
+    "request": "POST /api/viewings { clientId: <another client>, status: \"ATTENDED\" } with a CLIENT token",
+    "expected": "403, or clientId forced to the caller",
+    "actual": "201 – viewing created for clientId=another client with status ATTENDED.",
+    "status": "FAIL"
+  },
+  {
+    "id": "S-18",
+    "area": "Abuse protection",
+    "title": "Sign-in endpoints are rate-limited",
+    "request": "70 × POST /api/auth/demo-login in quick succession",
+    "expected": "HTTP 429 once 60 requests/15 min is exceeded",
+    "actual": "429 returned on request #53 (earlier sign-ins in this run count toward the 60).",
+    "status": "PASS"
+  }
+]

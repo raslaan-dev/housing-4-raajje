@@ -1,0 +1,534 @@
+[
+  {
+    "id": "TC-01",
+    "module": "Public search",
+    "title": "Public listing page shows only approved, available apartments",
+    "pre": "",
+    "steps": "1. Open the home page without signing in.\n2. Read the result count and cards.",
+    "data": "",
+    "expected": "Only approved and Available listings are shown (seed: 7). No pending or rented units.",
+    "actual": "\"7 apartments available\" shown; API returned 7 listings, all Available, no owner data.",
+    "status": "PASS",
+    "shots": [
+      "TC-01-public-search.png"
+    ]
+  },
+  {
+    "id": "TC-02",
+    "module": "Public search",
+    "title": "Filter by location and room count",
+    "pre": "",
+    "steps": "1. On the home page click Location \"Hulhumal\u00e9\".\n2. Click Rooms \"2\".",
+    "data": "Location = Hulhumal\u00e9, Rooms = 2",
+    "expected": "Only 2-room apartments in Hulhumal\u00e9 are listed.",
+    "actual": "1 result(s), all Hulhumal\u00e9 with 2 rooms.",
+    "status": "PASS",
+    "shots": [
+      "TC-02-filter-location-rooms.png"
+    ]
+  },
+  {
+    "id": "TC-03",
+    "module": "Public search",
+    "title": "Maximum rent filter and price sort",
+    "pre": "",
+    "steps": "1. Clear filters.\n2. Set the max monthly rent slider to about MVR 13,000.\n3. Sort by lowest price.",
+    "data": "Max rent \u2248 13,000; Sort = low to high",
+    "expected": "Every listing costs \u2264 the cap and appears cheapest first.",
+    "actual": "Cap MVR 13,000; prices shown 8,900, 11,500, 12,800 (ascending).",
+    "status": "PASS",
+    "shots": [
+      "TC-03-max-rent-sort.png"
+    ]
+  },
+  {
+    "id": "TC-04",
+    "module": "Public search",
+    "title": "Apartment detail page for a guest",
+    "pre": "",
+    "steps": "1. Open any listing card.\n2. Check the panel shown to a signed-out visitor.",
+    "data": "",
+    "expected": "Detail shows rent, rooms and branch; no owner details; prompts the guest to sign in to apply or request a viewing.",
+    "actual": "Detail shown with \"Request a viewing\" / \"Apply\" links to sign-in; no owner contact data.",
+    "status": "PASS",
+    "shots": [
+      "TC-04-guest-detail.png"
+    ]
+  },
+  {
+    "id": "TC-05",
+    "module": "Authentication",
+    "title": "Client registration rejects an incomplete form",
+    "pre": "",
+    "steps": "1. Go to Sign in \u2192 Client \u2192 \"New here? Create an account\".\n2. Leave all fields blank and click Create account.",
+    "data": "",
+    "expected": "Account is not created; a validation message is shown.",
+    "actual": "Stayed on the form with message: \"firstName: String must contain at least 1 character(s)\".",
+    "status": "PASS",
+    "shots": [
+      "TC-05-register-validation.png"
+    ]
+  },
+  {
+    "id": "TC-06",
+    "module": "Authentication",
+    "title": "Client self-registration creates an account and opens the client portal",
+    "pre": "",
+    "steps": "1. Fill the client registration form.\n2. Keep \"two-step verification\" on.\n3. Click Create account.",
+    "data": "Mariyam Tester69182, Female, DOB 1998-04-12, max rent 20,000, phone 791 5555, mariyam.tester69182@example.mv",
+    "expected": "Account created with a CL- code; two-step verification step shown; user lands on /client.",
+    "actual": "Redirected to /client as Mariyam Tester69182 (CL-3120).",
+    "status": "PASS",
+    "shots": [
+      "TC-06a-register-form.png",
+      "TC-06b-register-mfa-step.png",
+      "TC-06c-registered-client-portal.png"
+    ]
+  },
+  {
+    "id": "TC-07",
+    "module": "Authentication",
+    "title": "Signing in on the wrong account tab is refused",
+    "pre": "",
+    "steps": "1. Open Sign in \u2192 Client tab.\n2. Enter the owner email and click Sign in.",
+    "data": "owner@housing-4-raajje.test on the Client tab",
+    "expected": "Sign-in refused with a message telling the user to pick the Owner tab.",
+    "actual": "Refused: \"That account is a owner account. Choose the matching sign-in tab.\".",
+    "status": "PASS",
+    "shots": [
+      "TC-07-wrong-tab.png"
+    ]
+  },
+  {
+    "id": "TC-08",
+    "module": "Authentication (MFA)",
+    "title": "Staff sign-in requires an emailed code; a wrong code is rejected",
+    "pre": "",
+    "steps": "1. Sign in \u2192 Staff, choose Aminath Rasha.\n2. Click Sign in; the code screen appears.\n3. Enter 000000 and verify.",
+    "data": "aminath.rasha@housing-4-raajje.test, code 000000",
+    "expected": "A six-digit code is emailed; the wrong code is refused and the user stays on the code screen.",
+    "actual": "Code emailed to the staff mailbox (captured by the test email stub). Wrong code refused: \"Invalid or expired verification code.\".",
+    "status": "PASS",
+    "shots": [
+      "TC-08a-staff-signin.png",
+      "TC-08b-otp-screen.png",
+      "TC-08c-otp-wrong-code.png"
+    ]
+  },
+  {
+    "id": "TC-09",
+    "module": "Authentication (MFA)",
+    "title": "Staff sign-in with the correct emailed code",
+    "pre": "",
+    "steps": "1. Sign in \u2192 Staff as Ahmed Afzal.\n2. Enter the six-digit code from the email.",
+    "data": "",
+    "expected": "Specialist lands on /staff with specialist navigation and \"MFA on\" shown.",
+    "actual": "Signed in as STF \u00b7 Ahmed Afzal (Property Specialist, Mal\u00e9).",
+    "status": "PASS",
+    "shots": [
+      "TC-09-staff-signed-in.png"
+    ]
+  },
+  {
+    "id": "TC-37",
+    "module": "Authentication (MFA)",
+    "title": "Two-step verification for clients/owners checks a real code",
+    "pre": "",
+    "steps": "1. Register a client with \"Use two-step verification\" on (TC-06).\n2. On the code screen enter any six digits (987654).",
+    "data": "",
+    "expected": "A code is sent to the user and only that code is accepted (brief \u00a72A: MFA optional for external users).",
+    "actual": "Screen says: \"A 6-digit code goes to the phone on your account. Development mode: Clerk is not configured, so any six digits are accepted.\" \u2014 arbitrary digits 987654 were accepted; no code is sent. MFA for external users is simulated.",
+    "status": "FAIL",
+    "shots": [
+      "TC-06b-register-mfa-step.png"
+    ]
+  },
+  {
+    "id": "TC-10",
+    "module": "Client portal",
+    "title": "Client applies for an apartment with a chosen lease term",
+    "pre": "Signed in as the newly registered client (TC-06).",
+    "steps": "1. Open Coral Point 8B from Find a home.\n2. Choose lease term \"2 years\".\n3. Click Apply for this apartment.",
+    "data": "Coral Point 8B, term 24 months",
+    "expected": "Application is sent and a confirmation with the branch name appears.",
+    "actual": "Application sent to Branch 2 \u00b7 Hulhumal\u00e9 on 8 Nov 2026. A property specialist will verify it and message you.",
+    "status": "PASS",
+    "shots": [
+      "TC-10-client-apply.png"
+    ]
+  },
+  {
+    "id": "TC-11",
+    "module": "Client portal",
+    "title": "Client requests a viewing; a second request is blocked",
+    "pre": "",
+    "steps": "1. On the same apartment click Request a viewing.\n2. Check the button afterwards.",
+    "data": "",
+    "expected": "Viewing is scheduled; the button changes to \"Viewing requested\" and is disabled.",
+    "actual": "Button now reads \"Viewing requested \u00b7 staff will confirm\" and is disabled.",
+    "status": "PASS",
+    "shots": [
+      "TC-11-client-viewing.png"
+    ]
+  },
+  {
+    "id": "TC-12",
+    "module": "Client portal",
+    "title": "Tenant logs a maintenance request",
+    "pre": "Signed in as client@housing-4-raajje.test (active lease on Kanamana Residence 2A).",
+    "steps": "1. Open Maintenance.\n2. Pick a category and describe the problem.\n3. Submit.",
+    "data": "Category = first option; \"Kitchen tap is leaking under the sink.\"",
+    "expected": "Request is listed with status Open and an MR- reference; owner is notified.",
+    "actual": "New request appears at the top of \"Your requests\" with status Open.",
+    "status": "PASS",
+    "shots": [
+      "TC-12-maintenance.png"
+    ]
+  },
+  {
+    "id": "TC-13",
+    "module": "Client portal",
+    "title": "Client sends a message through the staff-mediated hub",
+    "pre": "",
+    "steps": "1. Open Messages.\n2. Select the first conversation.\n3. Type a message and click Send.",
+    "data": "\"Can the viewing be moved to Thursday afternoon?\"",
+    "expected": "Message appears in the thread.",
+    "actual": "Message added to the conversation with the branch staff member.",
+    "status": "PASS",
+    "shots": [
+      "TC-13-messages.png"
+    ]
+  },
+  {
+    "id": "TC-14",
+    "module": "Client portal",
+    "title": "Client updates profile preferences",
+    "pre": "",
+    "steps": "1. Open Profile.\n2. Change maximum rent to 16,500.\n3. Save.",
+    "data": "Max rent = 16,500",
+    "expected": "Profile saves; reload shows the new value.",
+    "actual": "Saved; after reload max rent shows 16,500.",
+    "status": "PASS",
+    "shots": [
+      "TC-14-profile.png"
+    ]
+  },
+  {
+    "id": "TC-15",
+    "module": "Client portal",
+    "title": "Tenant views lease, payment ledger and notifications",
+    "pre": "",
+    "steps": "1. Open My lease.",
+    "data": "",
+    "expected": "Shows monthly rent, expiry, deposit held, payment ledger with Paid/Overdue states, both signatures and notifications.",
+    "actual": "Lease LSE-2026-0412 shown with ledger, sign-offs (both signed) and notifications.",
+    "status": "PASS",
+    "shots": [
+      "TC-15-client-lease.png"
+    ]
+  },
+  {
+    "id": "TC-16",
+    "module": "Owner portal",
+    "title": "Apartment registration form rejects missing fields",
+    "pre": "Signed in as owner@housing-4-raajje.test.",
+    "steps": "1. My properties \u2192 Register new apartment.\n2. Submit with everything blank.",
+    "data": "",
+    "expected": "Form is not submitted; message asks for unit name, address and rent.",
+    "actual": "Blocked with: \"Fill in the unit name, address and monthly rent.\".",
+    "status": "PASS",
+    "shots": [
+      "TC-16-owner-register-validation.png"
+    ]
+  },
+  {
+    "id": "TC-17",
+    "module": "Owner portal",
+    "title": "Owner registers an apartment; branch is assigned from the district",
+    "pre": "",
+    "steps": "1. Fill unit name, house, goalhi, district Villingili, type Flat, 2 rooms, rent 11,000.\n2. Submit for verification.",
+    "data": "Test Unit 69182, Hiyaa Villa, Rehendhi Higun, Villingili, Flat, 2 rooms, MVR 11,000",
+    "expected": "Unit listed as Pending approval under Branch 3 Villingili with an APT- reference; it is NOT in public search yet.",
+    "actual": "\"Test Unit 69182\" listed as Pending approval (Villingili); not in public search.",
+    "status": "PASS",
+    "shots": [
+      "TC-17a-owner-register-form.png",
+      "TC-17b-owner-registered-pending.png"
+    ]
+  },
+  {
+    "id": "TC-18",
+    "module": "Owner portal",
+    "title": "Owner sets a unit to Under maintenance and back to Available",
+    "pre": "",
+    "steps": "1. Availability \u2192 Villingili Vista G4.\n2. Click Available and confirm.\n3. Click Under maintenance and confirm.",
+    "data": "",
+    "expected": "Each change asks for confirmation; status updates; under-maintenance units are hidden from public search.",
+    "actual": "Confirmation dialog shown; unit appeared in public search when Available and disappeared when Under maintenance.",
+    "status": "PASS",
+    "shots": [
+      "TC-18a-availability-confirm.png",
+      "TC-18b-availability-updated.png"
+    ]
+  },
+  {
+    "id": "TC-19",
+    "module": "Owner portal",
+    "title": "A rented unit cannot be set to Available while its lease is active",
+    "pre": "",
+    "steps": "1. Availability \u2192 Coral Court 1C (Rented).\n2. Click Available.",
+    "data": "",
+    "expected": "A \"Contract still active\" dialog blocks the change; the anonymised lease ledger is shown.",
+    "actual": "Blocked: \"Contract still active \u2026 cannot be set to Available while lease LSE-2026-0107 is running.\"",
+    "status": "PASS",
+    "shots": [
+      "TC-19-rented-locked.png"
+    ]
+  },
+  {
+    "id": "TC-20",
+    "module": "Owner portal",
+    "title": "Earnings show rent minus the platform fee, with downloadable statements",
+    "pre": "",
+    "steps": "1. Open Earnings.",
+    "data": "",
+    "expected": "Monthly rent minus the management fee (net payout) shown, with a downloadable statement (brief \u00a72B).",
+    "actual": "Page shows collected rent by month (e.g. Mar 23.8k = 9,800 + 14,000, i.e. gross), outstanding and year-to-date. Management fee shown: no; downloadable statement: no. ",
+    "status": "FAIL",
+    "shots": [
+      "TC-20-owner-earnings.png"
+    ]
+  },
+  {
+    "id": "TC-21",
+    "module": "Owner portal",
+    "title": "Property dashboard: view counter and aggregated rejection reasons (brief \u00a72B)",
+    "pre": "",
+    "steps": "1. Open the owner Dashboard and My properties.\n2. Look for total views, rejection-reason breakdown and viewing timeline.",
+    "data": "",
+    "expected": "Each unit shows total escorted viewings, % per feedback reason (e.g. \"Little expensive\") and an anonymised viewing timeline.",
+    "actual": "API returns the data (e.g. Coral Court 1C: 5 views; 20% Financial constraint (\"Little expensive\"), 40% Size (\"Rooms too small\"), 20% Furnishing (\"Needs more furniture\")), but no owner page displays it. Not implemented in the UI.",
+    "status": "FAIL",
+    "shots": [
+      "TC-21-owner-no-view-stats.png"
+    ]
+  },
+  {
+    "id": "TC-22",
+    "module": "Staff \u00b7 verification",
+    "title": "\"Approve and publish\" stays disabled until every compliance check is ticked",
+    "pre": "Signed in as Property Specialist (Mal\u00e9).",
+    "steps": "1. Open Verification queue.\n2. Select the first item.\n3. Observe the Approve button before ticking checks.",
+    "data": "",
+    "expected": "Approve is disabled until all checks are ticked.",
+    "actual": "Approve disabled with checks unticked.",
+    "status": "PASS",
+    "shots": [
+      "TC-22-queue-checks-required.png"
+    ]
+  },
+  {
+    "id": "TC-23",
+    "module": "Staff \u00b7 verification",
+    "title": "Specialist approves a queued apartment registration after compliance checks",
+    "pre": "",
+    "steps": "1. Select an item in the queue.\n2. Tick all compliance checks.\n3. Click Approve and publish.",
+    "data": "",
+    "expected": "Item leaves the queue; confirmation says the applicant was notified; audit entry written.",
+    "actual": "\"Orchid Court 4D\" approved; queue 2 \u2192 1; \"Approved registration APT-0331. The applicant has been notified. Dismiss\"",
+    "status": "PASS",
+    "shots": [
+      "TC-23a-queue-ticked.png",
+      "TC-23b-queue-approved.png"
+    ]
+  },
+  {
+    "id": "TC-24",
+    "module": "Staff \u00b7 viewings",
+    "title": "Specialist logs an escorted viewing with standardised feedback",
+    "pre": "",
+    "steps": "1. Open Viewings.\n2. Pick client, apartment, date, feedback \"Financial constraint (Little expensive)\" and a comment.\n3. Log viewing.",
+    "data": "Feedback = Financial constraint; comment \"Asked if rent is negotiable\"",
+    "expected": "Viewing appears at the top of the log with the staff name and feedback.",
+    "actual": "Viewing logged and listed with feedback \"Little expensive\" and the comment.",
+    "status": "PASS",
+    "shots": [
+      "TC-24-viewing-logged.png"
+    ]
+  },
+  {
+    "id": "TC-25",
+    "module": "Staff \u00b7 matchmaker",
+    "title": "Automated matchmaker lists clients whose budget and location fit a listing",
+    "pre": "",
+    "steps": "1. Open Matchmaker.\n2. Pick a listing.\n3. Click Notify on the first match.",
+    "data": "",
+    "expected": "Matches show why they matched (location, rent \u2264 max, rooms); notifying writes a notification.",
+    "actual": "Matches listed with reasons (e.g. Henveiru Loft 1A: CL-3108 \"Full match \u2013 location, budget, rooms\"; three partial matches); first client notified.",
+    "status": "PASS",
+    "shots": [
+      "TC-25a-matchmaker-matches.png",
+      "TC-25b-matchmaker-notified.png"
+    ]
+  },
+  {
+    "id": "TC-26",
+    "module": "Staff \u00b7 lease execution",
+    "title": "Specialist generates a lease contract for an available unit",
+    "pre": "",
+    "steps": "1. Open Lease execution.\n2. Property = Sea Breeze 3B, Client = Mariyam Tester69182.\n3. Deposit 18,500, start next month, term 1 year, payment Bank deposit.\n4. Generate contract.",
+    "data": "Rent 18,500; deposit 18,500; 12 months; Bank deposit",
+    "expected": "Contract LSE-YYYY-nnnn is generated as Awaiting signature, logged under the executing staff ID; renewal reminder date shown.",
+    "actual": "Contract LSE-2026-0542 generated and logged under STF-014. Client and owner notified by SMS and email to sign.",
+    "status": "PASS",
+    "shots": [
+      "TC-26-lease-generated.png"
+    ]
+  },
+  {
+    "id": "TC-27",
+    "module": "Lease signing",
+    "title": "Client signs the lease; it stays Awaiting signature until the owner signs",
+    "pre": "Lease LSE-2026-0542 exists.",
+    "steps": "1. As the new client open My lease.\n2. Click Sign lease.",
+    "data": "",
+    "expected": "Client signature recorded; notice says waiting for the owner; lease not yet active.",
+    "actual": "Client signed; page shows \"You signed on \u2026; waiting for the owner.\"",
+    "status": "PASS",
+    "shots": [
+      "TC-27a-client-lease-awaiting.png",
+      "TC-27b-client-signed.png"
+    ]
+  },
+  {
+    "id": "TC-28",
+    "module": "Lease signing",
+    "title": "Owner signs; lease becomes Active and the unit becomes Rented",
+    "pre": "",
+    "steps": "1. As the owner open Dashboard.\n2. Click Sign lease on the prompt.\n3. Check public search.",
+    "data": "",
+    "expected": "Lease Active; Sea Breeze 3B shows Rented and is removed from public search.",
+    "actual": "Owner signed \u2192 lease Active; Sea Breeze 3B now Rented and hidden from public search.",
+    "status": "PASS",
+    "shots": [
+      "TC-28a-owner-sign-prompt.png",
+      "TC-28b-unit-rented.png"
+    ]
+  },
+  {
+    "id": "TC-29",
+    "module": "Payments",
+    "title": "Tenant pays the current month (demo payment mode)",
+    "pre": "Signed in as client@housing-4-raajje.test (November rent overdue).",
+    "steps": "1. Open My lease.\n2. Click \"Pay November rent\".",
+    "data": "",
+    "expected": "Month marked Paid; owner payout = rent \u2212 management fee; notifications sent.",
+    "actual": "Clicked \"Pay November rent\"; ledger row now: \"Nov 2026 Online transfer MVR 14,000 Paid\".",
+    "status": "PASS",
+    "shots": [
+      "TC-29a-rent-due.png",
+      "TC-29b-rent-paid.png"
+    ]
+  },
+  {
+    "id": "TC-30",
+    "module": "Staff \u00b7 reception",
+    "title": "Receptionist routes a walk-in inquiry to a property specialist",
+    "pre": "Signed in as Receptionist (Mal\u00e9).",
+    "steps": "1. Open Inquiries.\n2. Choose a specialist for the first inquiry.\n3. Click Route.",
+    "data": "",
+    "expected": "Inquiry shows as routed to the chosen specialist.",
+    "actual": "Inquiry routed; row shows the assigned specialist.",
+    "status": "PASS",
+    "shots": [
+      "TC-30a-inquiries.png",
+      "TC-30b-inquiry-routed.png"
+    ]
+  },
+  {
+    "id": "TC-31",
+    "module": "RBAC (UI)",
+    "title": "Receptionist cannot open the verification queue or lease execution",
+    "pre": "",
+    "steps": "1. As Receptionist, check the sidebar.\n2. Type /staff/queue and /staff/leases in the address bar.",
+    "data": "",
+    "expected": "Sidebar shows only Overview, Inquiries, Viewings; direct URLs do not show the restricted pages.",
+    "actual": "Sidebar: Overview, Inquiries, Viewings. /staff/queue showed \"Today\"; /staff/leases showed \"Today\".",
+    "status": "PASS",
+    "shots": [
+      "TC-31-receptionist-blocked.png"
+    ]
+  },
+  {
+    "id": "TC-32",
+    "module": "Staff \u00b7 reports",
+    "title": "Branch manager sees reports for their own branch only",
+    "pre": "Signed in as Branch Manager, Mal\u00e9 (Hassan Zameel).",
+    "steps": "1. Open Branch reports.",
+    "data": "",
+    "expected": "Report covers Branch 1 Mal\u00e9 only; no branch switcher is offered.",
+    "actual": "Report header \"October 2026 \u00b7 Branch 1 \u00b7 Mal\u00e9\"; occupancy and staff tables list Mal\u00e9 only; branch shown as fixed text (no switcher).",
+    "status": "PASS",
+    "shots": [
+      "TC-32-branch-report.png"
+    ]
+  },
+  {
+    "id": "TC-33",
+    "module": "Staff \u00b7 admin",
+    "title": "Administrator provisions a staff account (validation + success)",
+    "pre": "Signed in as System Administrator.",
+    "steps": "1. Staff accounts \u2192 enter only \"Raya\" \u2192 Provision (expect error).\n2. Enter \"Fathimath Raya\", Receptionist, Hulhumal\u00e9 \u2192 Provision.",
+    "data": "Fathimath Raya \u00b7 Receptionist \u00b7 Hulhumal\u00e9",
+    "expected": "Single name rejected; full name creates an STF- account with a sign-in email.",
+    "actual": "Validation: \"Enter a first and last name.\". Created: \"STF-020 Fathimath Raya was created as Receptionist. Sign-in email: fathimath.raya@housing-4-raajje.test.\"",
+    "status": "PASS",
+    "shots": [
+      "TC-33a-provision-validation.png",
+      "TC-33b-provision-success.png"
+    ]
+  },
+  {
+    "id": "TC-34",
+    "module": "Staff \u00b7 admin",
+    "title": "Audit log records the actions performed in this run",
+    "pre": "",
+    "steps": "1. Open Audit log.",
+    "data": "",
+    "expected": "Newest entries include the lease, approval, viewing, routing and account provisioning done above, with actor and branch.",
+    "actual": "Audit log shows recent actions (found: LSE-2026-0542).",
+    "status": "PASS",
+    "shots": [
+      "TC-34-audit-log.png"
+    ]
+  },
+  {
+    "id": "TC-35",
+    "module": "Staff \u00b7 admin",
+    "title": "Administrator can switch branch scope; overview figures change",
+    "pre": "",
+    "steps": "1. Overview \u2192 Branch selector = Hulhumal\u00e9.",
+    "data": "",
+    "expected": "Overview figures and the page subtitle change to Hulhumal\u00e9.",
+    "actual": "Figures and branch table switched to Branch 2 \u00b7 Hulhumal\u00e9, but the subtitle still reads \"Work waiting across Branch 1 \u00b7 Mal\u00e9.\" (staff/+page.svelte uses the admin's home branch, not the selected scope).",
+    "status": "FAIL",
+    "shots": [
+      "TC-35-admin-branch-switch.png"
+    ]
+  },
+  {
+    "id": "TC-36",
+    "module": "Usability",
+    "title": "Pages work at phone width (390 px)",
+    "pre": "",
+    "steps": "1. Open the home page and the client lease page on a 390 px wide screen.",
+    "data": "",
+    "expected": "No horizontal scrolling; navigation collapses to a menu.",
+    "actual": "No horizontal overflow on either page.",
+    "status": "PASS",
+    "shots": [
+      "TC-36a-mobile-home.png",
+      "TC-36b-mobile-lease.png"
+    ]
+  }
+]
