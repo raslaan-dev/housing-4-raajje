@@ -29,6 +29,7 @@
   <footer class="foot">
     <div>Branch 1 Malé · Branch 2 Hulhumalé · Branch 3 Villingili</div>
     <div class="foot-links">
+      <a href="/credits">Photo credits</a>
       <a href="/login?role=staff">Staff sign in</a>
     </div>
   </footer>
@@ -124,6 +125,11 @@
     border-top: 1px solid var(--line);
     font-size: 12.5px;
     color: var(--muted);
+  }
+
+  .foot-links {
+    display: flex;
+    gap: 20px;
   }
 
   .foot-links a {

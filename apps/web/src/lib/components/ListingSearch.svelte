@@ -134,7 +134,6 @@
           <article class="card">
             <figure class="card-photo">
               <img class="card-image" src={image.url} alt={image.caption} loading="lazy" />
-              <figcaption><a href={image.sourceUrl} target="_blank" rel="noreferrer">{image.credit}</a></figcaption>
             </figure>
             <a class="card-body" href={hrefFor(l)}>
               <div class="card-top">
@@ -292,22 +291,6 @@
     transform: scale(1.04);
   }
 
-  .card-photo figcaption {
-    position: absolute;
-    right: 8px;
-    bottom: 8px;
-    max-width: calc(100% - 16px);
-    padding: 3px 7px;
-    border-radius: 5px;
-    background: rgba(15, 42, 50, 0.78);
-    color: #fff;
-    font-size: 10px;
-    line-height: 1.4;
-  }
-
-  .card-photo figcaption a {
-    color: inherit;
-  }
 
   .card-body {
     display: block;
