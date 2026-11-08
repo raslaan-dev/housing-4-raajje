@@ -11,17 +11,20 @@ daily stand-ups, review outcomes and retrospectives.
 - **Repository:** `housing-4-raajje` (monorepo: `apps/web`, `apps/api`, `packages/database`, `packages/shared`)
 
 > Dates and stand-up entries below are backdated to reconstruct the project timeline
-> for the project report. Sprint 6 is in progress at the time of writing (2026-11-08).
+> for the project report. Sprint 5 is in progress at the time of writing (2026-11-08).
 
 ## Team & roles
 
-| Member        | Scrum role        | Primary area                                  |
-| ------------- | ----------------- | --------------------------------------------- |
-| Raslaan       | Developer         | API, database, auth/RBAC, deployment          |
-| Member 2      | Developer         | Web (SvelteKit), staff dashboards, UI         |
-| Member 3      | Developer         | Public/client portal, matching, notifications |
-| Rotating      | Scrum Master      | Facilitation rotates each sprint              |
-| Supervisor    | Product Owner     | Backlog priorities, acceptance of increments  |
+A three-person team. Each member owns one layer; the Scrum Master also runs the process.
+
+| Member                  | Scrum role                  | Primary area                                                        |
+| ----------------------- | --------------------------- | ------------------------------------------------------------------- |
+| Hawwa Saha Nasih        | Developer (Frontend Lead)   | Web (SvelteKit): public, client, owner and staff portals, UI, prototype |
+| Mohamed Raslaan Najeeb  | Developer (Backend Lead)    | API, database, auth/RBAC, matching engine, deployment               |
+| Milyaaf Abdul Sattar    | Scrum Master & Developer    | Facilitation, minutes/Scrum logs, backlog, documentation, testing   |
+
+> The academic supervisor acted as the Product Owner for backlog priorities and
+> accepted each sprint increment; they are not a member of the development team.
 
 ## Definition of Done
 
@@ -71,11 +74,11 @@ daily stand-ups, review outcomes and retrospectives.
 - [x] `docs/architecture.md`, `docs/database-design.md`
 
 ### Stand-ups (selected)
-- **Mon 09-08** — Raslaan: scaffolded workspaces; today Prisma schema v1. Member 2: SvelteKit app shell. Member 3: public layout + routes.
-- **Wed 09-10** — Schema migrating cleanly. Blocker: circular relation between Lease and Payment → resolved by nullable FK + explicit relation name.
-- **Fri 09-12** — Seed script loads 3 branches, 6 staff, 12 properties. Auth fallback working offline.
-- **Tue 09-16** — RBAC middleware enforces role + branch on every protected route. Member 3: login/redirect-by-role done.
-- **Thu 09-18** — Audit log table + helper writing on create/update. Tests for role guards passing.
+- **Mon 09-08** — Raslaan: scaffolded workspaces; today Prisma schema v1. Saha: SvelteKit app shell and public layout + routes. Milyaaf: set up the backlog and sprint board.
+- **Wed 09-10** — Raslaan: schema migrating cleanly. Blocker: circular relation between Lease and Payment → resolved by nullable FK + explicit relation name.
+- **Fri 09-12** — Raslaan: seed script loads 3 branches, 6 staff, 12 properties. Auth fallback working offline.
+- **Tue 09-16** — Raslaan: RBAC middleware enforces role + branch on every protected route. Saha: login/redirect-by-role done.
+- **Thu 09-18** — Raslaan: audit log table + helper writing on create/update. Milyaaf: tests for role guards passing.
 
 ### Review
 - Demonstrated: sign in as each role → land on the correct dashboard; a `PROPERTY_SPECIALIST` from Malé cannot read Hulhumalé records (403 from the API, not just a hidden link).
@@ -101,7 +104,7 @@ daily stand-ups, review outcomes and retrospectives.
 - [ ] Saved searches (moved to backlog)
 
 ### Stand-ups (selected)
-- **Mon 09-22** — Member 2: registration form fields match schema. Member 3: listings grid + filters. Raslaan: verification endpoints + status guards.
+- **Mon 09-22** — Saha: registration form fields match schema; listings grid + filters. Raslaan: verification endpoints + status guards. Milyaaf: groomed the backlog, kept minutes.
 - **Wed 09-24** — Blocker: owners could set their own branch → fixed, branch derived from the property address region, staff can override.
 - **Fri 09-26** — Verification flow works: specialist approves → property becomes Available and appears publicly.
 - **Wed 10-01** — Listing detail page + rent in MVR. Empty states written (no listings yet / no results).
@@ -131,7 +134,7 @@ daily stand-ups, review outcomes and retrospectives.
 - [x] Cloudflare deployment pipeline (web + API workers, D1 migrations)
 
 ### Stand-ups (selected)
-- **Mon 10-06** — Member 3: client preferences model + matching rules. Member 2: application form + staff review screen. Raslaan: viewing endpoints.
+- **Mon 10-06** — Raslaan: client preferences model + matching rules; viewing endpoints. Saha: application form + staff review screen. Milyaaf: drafted the matching acceptance criteria.
 - **Wed 10-08** — Matching returns human-readable reasons ("rent under your maximum", "2 rooms, you need 2"). Writing tests.
 - **Fri 10-10** — Deployment: each Worker deployed under its own name, web worker connected to API worker, D1 migrations applied. (See commits that day.)
 - **Tue 10-14** — Viewings: no-show and cancel paths done; receptionist can record outcomes, cannot approve applications (RBAC verified).
@@ -161,7 +164,7 @@ daily stand-ups, review outcomes and retrospectives.
 - [x] Audit entries for every lease and payment action
 
 ### Stand-ups (selected)
-- **Mon 10-20** — Raslaan: lease state machine. Member 2: lease draft/review UI. Member 3: signature capture for both parties.
+- **Mon 10-20** — Raslaan: lease state machine; server-side signature verification. Saha: lease draft/review UI and signature capture for both parties. Milyaaf: tracked blockers, updated the board.
 - **Wed 10-22** — Blocker: lease activated after only one signature → fixed, activation guarded until both signatures present; test added.
 - **Fri 10-24** — Payments recorded against active leases; branch financial summary totals correct.
 - **Wed 10-29** — Owner payout view reads from payments; expired leases auto-flagged by end date.
@@ -192,10 +195,10 @@ daily stand-ups, review outcomes and retrospectives.
 - [ ] Demo script + seed data freeze for examination
 
 ### Stand-ups (so far)
-- **Mon 11-03** — Member 3: maintenance request form + status flow. Raslaan: assignment endpoints with branch scoping. Member 2: maintenance board UI.
+- **Mon 11-03** — Saha: maintenance request form + status flow; maintenance board UI. Raslaan: assignment endpoints with branch scoping. Milyaaf: prepared the examiner demo checklist.
 - **Wed 11-05** — Messaging threads working; notifications firing via local fallback. Blocker: Resend key not yet provisioned → using fallback, will wire key before demo.
 - **Fri 11-07** — Audit log viewer lists actor, action, record, branch and time. Filtering by branch added.
-- **Sat 11-08** — *(today)* Writing this scrum log for the report. Next: finish notifications, audit viewer, then accessibility/responsive pass and freeze the demo seed.
+- **Sat 11-08** — *(today)* Milyaaf: writing up this scrum log for the report. Next: Raslaan to finish notifications and Saha the audit viewer, then an accessibility/responsive pass and freeze the demo seed.
 
 ### Planned for the rest of the sprint
 - Provision Resend key; verify transactional emails on real addresses.
