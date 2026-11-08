@@ -30,20 +30,30 @@ const METRIC_NOTE: Record<MetricKey, string> = {
 
 const BRANCH_LABEL: Record<BranchName, string> = { Male: 'Branch 1', Hulhumale: 'Branch 2', Villingili: 'Branch 3' };
 
-const LISTING_PHOTOS = [
-  {
-    url: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c4/Apartment_Blocks_-_Hulhumale_-_Maldives_%2814111148798%29.jpg/1280px-Apartment_Blocks_-_Hulhumale_-_Maldives_%2814111148798%29.jpg',
-    caption: 'Representative Maldives apartment photography · Apartment blocks, Hulhumalé'
-  },
-  {
-    url: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0f/Detail_of_Apartment_Blocks_-_Hulhumale_-_Maldives_%2814295828132%29.jpg/1280px-Detail_of_Apartment_Blocks_-_Hulhumale_-_Maldives_%2814295828132%29.jpg',
-    caption: 'Representative Maldives apartment photography · Apartment detail, Hulhumalé'
-  },
-  {
-    url: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a9/Architecture_-_Hulhumale_-_Maldives_%2814295830842%29.jpg/1280px-Architecture_-_Hulhumale_-_Maldives_%2814295830842%29.jpg',
-    caption: 'Representative Maldives apartment photography · Architecture, Hulhumalé'
-  }
+// Interior photo per listing (files in apps/web/static/listings). The API adds island street photos after it.
+const INTERIORS = [
+  'Duplex living room with loft staircase',
+  'Open-plan living and dining area',
+  'Bright living room with balcony',
+  'Fitted kitchen and dining table',
+  'Bedroom with balcony door',
+  'Living room with hallway to bedrooms'
 ];
+// Matched by hand to the listing's size and style; the rest take turns.
+const INTERIOR_FOR: Record<string, number> = {
+  'Henveiru Loft 1A': 1,
+  'Sandbank 6F': 2,
+  'Bahaaru View 2B': 3,
+  'Sea Breeze 3B': 4,
+  'Galolhu Garden 2C': 5,
+  'Coral Point 8B': 6,
+  'Nirolhu Heights 5A': 3
+};
+let nextInterior = 0;
+function interiorImage(title: string) {
+  const n = INTERIOR_FOR[title] ?? (nextInterior++ % INTERIORS.length) + 1;
+  return { url: `/listings/interior-${n}.jpg`, caption: INTERIORS[n - 1] };
+}
 
 async function wipe() {
   // Children before parents.
@@ -218,9 +228,7 @@ async function main() {
         ownerId: users[p.owner],
         branchId: branch[b],
         createdAt: p.createdAt,
-        images: {
-          create: [LISTING_PHOTOS[(p.title.length + p.rooms) % LISTING_PHOTOS.length]]
-        },
+        images: { create: [interiorImage(p.title)] },
         history: { create: { status: p.status, reason: 'Seeded state', createdAt: p.createdAt } }
       }
     });

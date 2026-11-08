@@ -62,3 +62,4 @@ export function branchMatchesLocation(branch: BranchName, location: string): boo
 }
 
 export * from './portal.js';
+export * from './photos.js';

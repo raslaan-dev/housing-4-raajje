@@ -14,10 +14,6 @@
   <div>
     <figure class="hero-photo">
       <img src={listing.images[0].url} alt={listing.images[0].caption} />
-      <figcaption>
-        Representative demo imagery ·
-        <a href={listing.images[0].sourceUrl} target="_blank" rel="noreferrer">{listing.images[0].credit}</a>
-      </figcaption>
     </figure>
     <h1 class="title">{listing.title}</h1>
     <p class="address">{fullAddress(listing)}</p>
@@ -27,6 +23,12 @@
       <div><dt>Rooms</dt><dd class="num">{listing.roomCount}</dd></div>
       <div><dt>Handled by</dt><dd>{branchLabel(listing.branch)}</dd></div>
     </dl>
+    {#if listing.images[1]}
+      <figure class="area-photo">
+        <img src={listing.images[1].url} alt={listing.images[1].caption} loading="lazy" />
+        <figcaption>Around {listing.city} · representative photo</figcaption>
+      </figure>
+    {/if}
   </div>
 
   <aside class="sheet panel">
@@ -60,21 +62,25 @@
     object-fit: cover;
   }
 
-  .hero-photo figcaption {
-    position: absolute;
-    right: 12px;
-    bottom: 12px;
-    padding: 5px 9px;
-    border-radius: 6px;
-    background: rgba(15, 42, 50, 0.78);
-    color: #fff;
-    font-size: 11px;
+
+  .area-photo {
+    margin: 28px 0 0;
   }
 
-  .hero-photo figcaption a {
-    color: inherit;
-    text-decoration: underline;
-    text-underline-offset: 2px;
+  .area-photo img {
+    display: block;
+    width: 100%;
+    max-width: 420px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: var(--radius-sheet);
+    background: var(--mist);
+  }
+
+  .area-photo figcaption {
+    margin-top: 8px;
+    font-size: 12.5px;
+    color: var(--muted);
   }
 
   .title {
