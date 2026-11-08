@@ -25,7 +25,8 @@
       "name": "housing-4-raajje-api-preview",
       "workers_dev": false,
       "preview_urls": false,
-      "vars": { "NODE_ENV": "preview", "DEMO_LOGIN": "true" },
+      // RESEND_API_KEY and STAFF_OTP_EMAIL are Worker secrets (wrangler secret put --env preview), not committed.
+      "vars": { "NODE_ENV": "preview", "DEMO_LOGIN": "true", "RESEND_FROM": "Housing_4_Raajje <housing@250.red>" },
       "d1_databases": [
         {
           "binding": "DB",
