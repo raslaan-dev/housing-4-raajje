@@ -8,9 +8,9 @@ const RESEND_COOLDOWN_MS = 60 * 1000;
 const MAX_ATTEMPTS = 5;
 
 function otpSecret() {
-  const secret = process.env.STAFF_OTP_SECRET;
+  const secret = process.env.RESEND_API_KEY;
   if (!secret || secret.length < 32) {
-    throw new HttpError(503, 'Staff email verification is not configured.');
+    throw new HttpError(503, 'Email verification is not configured.');
   }
   return secret;
 }
@@ -19,13 +19,14 @@ function otpHash(userId: string, code: string) {
   return createHmac('sha256', otpSecret()).update(`${userId}:${code}`).digest('hex');
 }
 
+/** Real addresses get their own code; seeded and provisioned `.test` accounts share the STAFF_OTP_EMAIL mailbox. */
 function emailDestination(userEmail: string) {
-  const destination = process.env.STAFF_OTP_EMAIL?.trim() || userEmail;
+  const destination = userEmail.endsWith('.test') ? process.env.STAFF_OTP_EMAIL?.trim() || userEmail : userEmail;
   if (destination.endsWith('.test')) {
-    throw new HttpError(503, 'Configure STAFF_OTP_EMAIL to deliver staff verification codes.');
+    throw new HttpError(503, 'Configure STAFF_OTP_EMAIL to deliver verification codes for .test accounts.');
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(destination)) {
-    throw new HttpError(503, 'Staff email verification has an invalid destination.');
+    throw new HttpError(503, 'Email verification has an invalid destination.');
   }
   return destination;
 }
@@ -38,19 +39,19 @@ function maskedEmail(email: string) {
 async function sendCode(email: string, code: string) {
   const apiKey = process.env.RESEND_API_KEY ?? '';
   if (!apiKey.startsWith('re_') || apiKey.length <= 20 || /your|placeholder|xxx|fake/i.test(apiKey)) {
-    throw new HttpError(503, 'Staff email verification is not configured.');
+    throw new HttpError(503, 'Email verification is not configured.');
   }
 
   const resend = new Resend(apiKey);
   const { error } = await resend.emails.send({
     from: process.env.RESEND_FROM ?? 'Housing_4_Raajje <onboarding@resend.dev>',
     to: email,
-    subject: 'Your staff sign-in code',
-    text: `Your Housing_4_Raajje staff sign-in code is ${code}. It expires in 10 minutes. If you did not request this, ignore this email.`
+    subject: 'Your sign-in code',
+    text: `Your Housing_4_Raajje sign-in code is ${code}. It expires in 10 minutes. If you did not request this, ignore this email.`
   });
   if (error) {
-    console.error('Resend staff OTP delivery failed:', error);
-    throw new HttpError(503, 'Could not send the staff verification email. Try again later.');
+    console.error('Resend OTP delivery failed:', error);
+    throw new HttpError(503, 'Could not send the verification email. Try again later.');
   }
 }
 

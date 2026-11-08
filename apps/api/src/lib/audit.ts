@@ -1,3 +1,4 @@
+import type { ReviewFeedback } from '@housing/shared';
 import { prisma } from './prisma.js';
 
 /** Append an audit row. `branchLabel` is "Branch 1".."Branch 3" or "All". */
@@ -24,5 +25,19 @@ export function parseAuditMetadata(metadata: string | null): { description: stri
     };
   } catch {
     return { description: metadata, branch: 'All' };
+  }
+}
+
+export function parseReviewFeedback(raw: string | null): ReviewFeedback | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Partial<ReviewFeedback>;
+    return {
+      passed: Array.isArray(parsed.passed) ? parsed.passed.map(String) : [],
+      missing: Array.isArray(parsed.missing) ? parsed.missing.map(String) : [],
+      returnedAt: String(parsed.returnedAt ?? '')
+    };
+  } catch {
+    return null;
   }
 }

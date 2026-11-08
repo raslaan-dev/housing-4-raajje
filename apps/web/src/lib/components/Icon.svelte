@@ -20,13 +20,15 @@
     Signature,
     Sparkles,
     User,
-    Users
+    Users,
+    X
   } from '@jis3r/icons';
 
   // Animated Lucide icons from movingicons.dev (@jis3r/icons).
   const ICONS = {
     'arrow-left': ArrowLeft,
     check: Check,
+    x: X,
     'menu-open': PanelLeftOpen,
     'menu-close': PanelLeftClose,
     search: Search,

@@ -29,7 +29,7 @@
     if (!sel) return;
     const item = sel;
     const ok = await decide.run(() =>
-      api.post(`/staff/queue/${item.kind}/${item.id}/${kind}`, kind === 'approve' ? { checks: ticks } : {})
+      api.post(`/staff/queue/${item.kind}/${item.id}/${kind}`, { checks: ticks })
     );
     if (ok !== undefined) {
       resolved = `${kind === 'approve' ? 'Approved' : 'Returned'} ${item.kind === 'PROPERTY' ? 'registration' : 'application'} ${item.reference}.`;

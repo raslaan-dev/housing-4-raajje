@@ -3,6 +3,7 @@
   import { api } from '$lib/api';
   import { action } from '$lib/resource.svelte';
   import { scoped } from '$lib/staff.svelte';
+  import { session } from '$lib/session.svelte';
   import { branchLabel, BRANCH_OPTIONS, ROLE_LABEL } from '$lib/format';
   import LoadState from '$lib/components/LoadState.svelte';
 
@@ -12,10 +13,24 @@
   let touched = $state(false);
   let created = $state<StaffAccount | null>(null);
   const provision = action();
+  const remove = action();
+  let confirming = $state<string | null>(null);
+  let removed = $state<{ account: StaffAccount; outcome: 'deleted' | 'deactivated' } | null>(null);
+
+  async function onDelete(account: StaffAccount) {
+    const result = await remove.run(() => api.delete<{ id: string; removed: 'deleted' | 'deactivated' }>(`/staff/accounts/${account.id}`));
+    if (result) {
+      accounts.set((accounts.data ?? []).filter((a) => a.id !== account.id));
+      removed = { account, outcome: result.removed };
+      if (created?.id === account.id) created = null;
+    }
+    confirming = null;
+  }
 
   async function onSubmit(e: SubmitEvent) {
     e.preventDefault();
     touched = true;
+    removed = null;
     const [firstName = '', ...rest] = f.name.trim().split(/\s+/);
     const lastName = rest.join(' ');
     if (!firstName || !lastName) return;
@@ -24,6 +39,7 @@
     );
     if (account) {
       created = account;
+      remove.clear();
       accounts.set([...(accounts.data ?? []), account]);
       f.name = '';
       touched = false;
@@ -57,12 +73,18 @@
 {#if created}
   <p class="notice made" role="status">{created.code} {created.name} was created as {ROLE_LABEL[created.role]}. Sign-in email: {created.email}.</p>
 {/if}
+{#if remove.error}<p class="form-error" role="alert">{remove.error}</p>{/if}
+{#if removed}
+  <p class="notice made" role="status">
+    {removed.account.code} {removed.account.name} was {removed.outcome === 'deleted' ? 'deleted' : 'removed. Their past activity stays in the audit log'}.
+  </p>
+{/if}
 
 <div class="list">
   <LoadState loading={accounts.loading && !accounts.data} error={accounts.error} retry={accounts.reload} rows={6}>
     <div class="scroll-x">
       <table class="ledger wide">
-        <thead><tr><th>ID</th><th>Name</th><th>Role</th><th>Branch</th><th class="end">Two-step</th></tr></thead>
+        <thead><tr><th>ID</th><th>Name</th><th>Role</th><th>Branch</th><th class="end">Two-step</th><th class="end"><span class="visually-hidden">Actions</span></th></tr></thead>
         <tbody>
           {#each accounts.data ?? [] as p (p.id)}
             <tr>
@@ -72,6 +94,18 @@
               <td class="meta">{branchLabel(p.branch)}</td>
               <td class="end">
                 <span class="pill {p.mfaEnabled ? 'pill-sage' : 'pill-dashed'}">{p.mfaEnabled ? 'Enrolled' : 'Pending enrolment'}</span>
+              </td>
+              <td class="end actions">
+                {#if p.id === session.user?.id}
+                  <span class="meta">You</span>
+                {:else if confirming === p.id}
+                  <button type="button" class="btn btn-sm btn-primary" disabled={remove.busy} onclick={() => onDelete(p)}>
+                    {remove.busy ? 'Deleting…' : 'Confirm delete'}
+                  </button>
+                  <button type="button" class="btn btn-sm btn-quiet" disabled={remove.busy} onclick={() => (confirming = null)}>Cancel</button>
+                {:else}
+                  <button type="button" class="btn btn-sm" aria-label="Delete {p.name}" onclick={() => { confirming = p.id; remove.clear(); }}>Delete</button>
+                {/if}
               </td>
             </tr>
           {/each}
@@ -84,11 +118,21 @@
 <style>
   .provision {
     display: grid;
-    grid-template-columns: minmax(200px, 2fr) repeat(2, minmax(160px, 1fr)) auto;
+    grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)) auto;
     gap: 14px;
     align-items: end;
     margin-top: 28px;
     padding: 22px 24px;
+  }
+
+  @media (max-width: 1100px) {
+    .provision {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .provision .name {
+      grid-column: 1 / -1;
+    }
   }
 
   @media (max-width: 760px) {
@@ -111,7 +155,15 @@
   }
 
   .wide {
-    min-width: 720px;
+    min-width: 820px;
+  }
+
+  .actions {
+    white-space: nowrap;
+  }
+
+  .actions .btn + .btn {
+    margin-left: 8px;
   }
 
   .strong {

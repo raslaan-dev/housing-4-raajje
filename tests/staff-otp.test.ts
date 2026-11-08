@@ -35,7 +35,6 @@ const originalEnv = {
   nodeEnv: process.env.NODE_ENV,
   demoLogin: process.env.DEMO_LOGIN,
   otpEmail: process.env.STAFF_OTP_EMAIL,
-  otpSecret: process.env.STAFF_OTP_SECRET,
   resendApiKey: process.env.RESEND_API_KEY,
   resendFrom: process.env.RESEND_FROM
 };
@@ -56,7 +55,16 @@ const clientUser = {
   ...staffUser,
   id: 'client-1',
   email: 'client@housing-4-raajje.test',
+  mfaEnabled: false,
   role: { name: 'CLIENT' }
+};
+
+const twoStepOwner = {
+  ...staffUser,
+  id: 'owner-1',
+  email: 'owner.two.step@example.com',
+  mfaEnabled: true,
+  role: { name: 'OWNER' }
 };
 
 let challenge: Record<string, unknown> | null;
@@ -82,13 +90,12 @@ beforeEach(() => {
   process.env.NODE_ENV = 'development';
   process.env.DEMO_LOGIN = 'true';
   process.env.STAFF_OTP_EMAIL = 'staff-otp@example.com';
-  process.env.STAFF_OTP_SECRET = 'test-staff-otp-secret-that-is-at-least-32-characters';
-  process.env.RESEND_API_KEY = 're_123456789012345678901234';
+  process.env.RESEND_API_KEY = 're_test_staff_otp_key_that_is_at_least_32_chars';
   process.env.RESEND_FROM = 'Housing Test <no-reply@example.test>';
   challenge = null;
   vi.resetAllMocks();
   userFindUnique.mockImplementation(({ where }: { where: { email: string } }) =>
-    Promise.resolve(where.email === staffUser.email ? staffUser : where.email === clientUser.email ? clientUser : null)
+    Promise.resolve([staffUser, clientUser, twoStepOwner].find((u) => u.email === where.email) ?? null)
   );
   challengeFindUnique.mockImplementation(() => Promise.resolve(challenge));
   challengeCreate.mockImplementation(({ data }: { data: Record<string, unknown> }) => {
@@ -120,8 +127,6 @@ afterEach(() => {
   else process.env.DEMO_LOGIN = originalEnv.demoLogin;
   if (originalEnv.otpEmail === undefined) delete process.env.STAFF_OTP_EMAIL;
   else process.env.STAFF_OTP_EMAIL = originalEnv.otpEmail;
-  if (originalEnv.otpSecret === undefined) delete process.env.STAFF_OTP_SECRET;
-  else process.env.STAFF_OTP_SECRET = originalEnv.otpSecret;
   if (originalEnv.resendApiKey === undefined) delete process.env.RESEND_API_KEY;
   else process.env.RESEND_API_KEY = originalEnv.resendApiKey;
   if (originalEnv.resendFrom === undefined) delete process.env.RESEND_FROM;
@@ -172,6 +177,37 @@ describe('staff email OTP', () => {
       expect(await response.json()).toMatchObject({ user: { id: clientUser.id, role: 'CLIENT' } });
       expect(sendEmail).not.toHaveBeenCalled();
       expect(challengeCreate).not.toHaveBeenCalled();
+    });
+  });
+
+  it('emails owners with two-step verification at their own address and checks the code', async () => {
+    await withAuthServer(async (baseUrl) => {
+      const login = await fetch(`${baseUrl}/demo-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: twoStepOwner.email, accountType: 'owner' })
+      });
+      const emailArgs = sendEmail.mock.calls[0][0] as { to: string; text: string };
+      const code = emailArgs.text.match(/\b(\d{6})\b/)?.[1];
+
+      expect(login.status).toBe(200);
+      expect(await login.json()).toMatchObject({ otpRequired: true });
+      expect(emailArgs.to).toBe(twoStepOwner.email);
+
+      const wrong = await fetch(`${baseUrl}/otp/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: twoStepOwner.email, code: code === '000000' ? '111111' : '000000' })
+      });
+      expect(wrong.status).toBe(401);
+
+      const right = await fetch(`${baseUrl}/otp/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: twoStepOwner.email, code })
+      });
+      expect(right.status).toBe(200);
+      expect(await right.json()).toMatchObject({ user: { id: twoStepOwner.id, role: 'OWNER' } });
     });
   });
 

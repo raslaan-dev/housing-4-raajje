@@ -68,6 +68,7 @@ export type RegisterBody = {
   sex?: 'Female' | 'Male'; // client
   dateOfBirth?: string; // client, YYYY-MM-DD
   maxRent?: number; // client
+  mfaEnabled?: boolean; // email a sign-in code instead of opening a session straight away
 };
 
 /* ---------- Client ---------- */
@@ -146,6 +147,9 @@ export type MessageThread = {
 
 export type FeedbackShare = { metric: string; count: number; pct: number };
 
+/** Why the branch returned a registration or application: the compliance checks that passed and those still missing. */
+export type ReviewFeedback = { passed: string[]; missing: string[]; returnedAt: string };
+
 export type OwnerUnit = {
   id: string;
   title: string;
@@ -158,6 +162,7 @@ export type OwnerUnit = {
   monthlyRent: number;
   status: string;
   approvalStatus: string;
+  review: ReviewFeedback | null; // set while approvalStatus is REJECTED
   viewCount: number;
   lastViewing: string | null;
   feedback: FeedbackShare[]; // reasons viewers did not proceed, pct of viewings

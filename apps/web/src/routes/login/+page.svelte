@@ -27,8 +27,6 @@
   let email = $state('');
   let reg = $state({ firstName: '', lastName: '', email: '', phone: '', nationalId: '', sex: 'Female', dateOfBirth: '', maxRent: '' });
   let useMfa = $state(true);
-  let pending = $state<SessionUser | null>(null);
-  let pendingToken = $state<string | null>(null);
   let pendingEmail = $state('');
   let otpDestination = $state('');
   let otpResent = $state(false);
@@ -78,11 +76,21 @@
 
   async function finish(user: SessionUser, token?: string | null) {
     signIn(user, token ?? undefined);
-    if (registering && useMfa) {
-      await api.patch(user.role === 'OWNER' ? '/owner/profile' : '/client/profile', { mfaEnabled: true }).catch(() => undefined);
-    }
     await goto(destination(user));
   }
+
+  /** Show the code step for an account the server just emailed a sign-in code to. */
+  async function startOtp(forEmail: string, sentTo?: string) {
+    pendingEmail = forEmail.trim().toLowerCase();
+    otpDestination = sentTo ?? 'your registered email';
+    otpResent = false;
+    code = ['', '', '', '', '', ''];
+    step = 'mfa';
+    await tick();
+    codeInputs[0]?.focus();
+  }
+
+  type AuthResponse = { user?: SessionUser; token?: string; otpRequired?: boolean; destination?: string };
 
   async function onSubmit(e: SubmitEvent) {
     e.preventDefault();
@@ -95,6 +103,7 @@
           lastName: reg.lastName.trim(),
           email: reg.email.trim(),
           phone: reg.phone.trim(),
+          mfaEnabled: useMfa,
           ...(who === 'owner'
             ? { nationalId: reg.nationalId.trim() }
             : {
@@ -103,25 +112,18 @@
                 maxRent: Number(reg.maxRent.replace(/\D/g, '')) || undefined
               })
         };
-        const result = await api.post<{ user: SessionUser; token?: string }>('/auth/register', body);
+        const result = await api.post<AuthResponse>('/auth/register', body);
+        if (result.otpRequired) {
+          await startOtp(body.email, result.destination);
+          return null;
+        }
+        if (!result.user) throw new Error('The sign-up response was incomplete. Try again.');
         loginToken = result.token;
-        const user = result.user;
-        return { ...user, mfaEnabled: useMfa };
+        return result.user;
       }
-      const response = await api.post<{ user?: SessionUser; token?: string; otpRequired?: boolean; destination?: string }>(
-        '/auth/demo-login',
-        { email: email.trim(), accountType: who }
-      );
+      const response = await api.post<AuthResponse>('/auth/demo-login', { email: email.trim(), accountType: who });
       if (response.otpRequired) {
-        pendingEmail = email.trim().toLowerCase();
-        otpDestination = response.destination ?? 'your registered email';
-        pending = null;
-        pendingToken = null;
-        otpResent = false;
-        code = ['', '', '', '', '', ''];
-        step = 'mfa';
-        await tick();
-        codeInputs[0]?.focus();
+        await startOtp(email, response.destination);
         return null;
       }
       const user = response.user;
@@ -134,15 +136,7 @@
       return user;
     });
     if (!user) return;
-    if (isStaff || user.mfaEnabled) {
-      pending = user;
-      pendingToken = loginToken ?? null;
-      step = 'mfa';
-      await tick();
-      codeInputs[0]?.focus();
-    } else {
-      await finish(user, loginToken);
-    }
+    await finish(user, loginToken);
   }
 
   function onCodeInput(i: number, e: Event) {
@@ -174,20 +168,16 @@
       return;
     }
     codeError = null;
-    if (pendingEmail) {
-      const result = await verifyOtp.run(() =>
-        api.post<{ user: SessionUser; token?: string }>('/auth/staff-otp/verify', { email: pendingEmail, code: code.join('') })
-      );
-      if (result) await finish(result.user, result.token);
-    } else if (pending) {
-      await finish({ ...pending, mfaEnabled: true }, pendingToken);
-    }
+    const result = await verifyOtp.run(() =>
+      api.post<{ user: SessionUser; token?: string }>('/auth/otp/verify', { email: pendingEmail, code: code.join('') })
+    );
+    if (result) await finish(result.user, result.token);
   }
 
-  async function resendStaffOtp() {
+  async function resendCode() {
     if (!pendingEmail) return;
     const result = await resendOtp.run(() =>
-      api.post<{ sent: boolean; destination: string }>('/auth/staff-otp/resend', { email: pendingEmail })
+      api.post<{ sent: boolean; destination: string }>('/auth/otp/resend', { email: pendingEmail })
     );
     if (result) {
       otpDestination = result.destination;
@@ -321,15 +311,8 @@
         </form>
       {:else}
         <h2 class="form-title">Enter verification code</h2>
-        {#if pendingEmail}
-          <p class="form-sub">Enter the six-digit code sent to {otpDestination}. The code expires in 10 minutes.</p>
-          {#if otpResent}<p class="form-sub" role="status">A new code has been sent.</p>{/if}
-        {:else}
-          <p class="form-sub">
-            A 6-digit code goes to the phone on your account. Development mode: Clerk is not configured, so any six digits are
-            accepted.
-          </p>
-        {/if}
+        <p class="form-sub">Enter the six-digit code sent to {otpDestination}. The code expires in 10 minutes.</p>
+        {#if otpResent}<p class="form-sub" role="status">A new code has been sent.</p>{/if}
         <form onsubmit={verify} novalidate>
           <div class="code" role="group" aria-label="Verification code">
             {#each code as digit, i}
@@ -350,21 +333,22 @@
           <button type="submit" class="btn btn-primary btn-block verify" disabled={verifyOtp.busy}>
             {verifyOtp.busy ? 'Verifying…' : 'Verify and continue'}
           </button>
-          {#if pendingEmail}
-            {#if resendOtp.error}<p class="form-error" role="alert">{resendOtp.error}</p>{/if}
-            <button type="button" class="btn-quiet btn" onclick={resendStaffOtp} disabled={resendOtp.busy}>
-              {resendOtp.busy ? 'Sending…' : 'Resend code'}
-            </button>
-          {/if}
+          {#if resendOtp.error}<p class="form-error" role="alert">{resendOtp.error}</p>{/if}
+          <button type="button" class="btn-quiet btn" onclick={resendCode} disabled={resendOtp.busy}>
+            {resendOtp.busy ? 'Sending…' : 'Resend code'}
+          </button>
           <div class="code-foot">
             <button
               type="button"
               class="btn-quiet btn"
               onclick={() => {
+                // A just-registered account already exists, so going back leads to sign-in rather than sign-up.
+                if (registering) {
+                  mode = 'signin';
+                  email = pendingEmail;
+                }
                 step = 'form';
                 pendingEmail = '';
-                pending = null;
-                pendingToken = null;
                 verifyOtp.clear();
                 resendOtp.clear();
                 code = ['', '', '', '', '', ''];

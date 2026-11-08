@@ -6,6 +6,7 @@
   import { fullAddress, mvr, rooms } from '$lib/format';
   import LoadState from '$lib/components/LoadState.svelte';
   import Pill from '$lib/components/Pill.svelte';
+  import Icon from '$lib/components/Icon.svelte';
 
   const NUMBER_WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
   const overview = resource(() => api.get<OwnerOverview>('/owner/overview'));
@@ -20,6 +21,7 @@
   const missing = $derived({ title: !f.title.trim(), house: !f.house.trim(), goalhi: !f.goalhi.trim(), rent: !rentValue });
   const invalid = $derived(Object.values(missing).some(Boolean));
   const units = $derived(overview.data?.units ?? []);
+  let openReview = $state<string | null>(null);
 
   function close() {
     formOpen = false;
@@ -123,7 +125,9 @@
           </thead>
           <tbody>
             {#each units as u (u.id)}
-              <tr>
+              {@const returned = u.approvalStatus === 'REJECTED'}
+              {@const open = returned && openReview === u.id}
+              <tr class:has-review={open}>
                 <td>
                   <div class="cell-title">{u.title}</div>
                   <div class="cell-sub">{fullAddress(u)}</div>
@@ -131,12 +135,51 @@
                 <td class="type">{u.propertyType} · {rooms(u.roomCount)}</td>
                 <td class="end rent">{mvr(u.monthlyRent)}</td>
                 <td class="end">
-                  <Pill
-                    status={u.approvalStatus === 'PENDING' ? 'PENDING_APPROVAL' : u.approvalStatus === 'REJECTED' ? 'REJECTED' : u.status}
-                    label={u.approvalStatus === 'PENDING' ? 'Pending verification' : u.approvalStatus === 'REJECTED' ? 'Returned by branch' : undefined}
-                  />
+                  {#if returned}
+                    <button
+                      type="button"
+                      class="review-toggle"
+                      aria-expanded={open}
+                      aria-controls="review-{u.id}"
+                      onclick={() => (openReview = open ? null : u.id)}
+                    >
+                      <Pill status="REJECTED" label="Returned by branch" />
+                      <span class="chevron" class:up={open} aria-hidden="true">▾</span>
+                      <span class="visually-hidden">{open ? 'Hide' : 'Show'} why</span>
+                    </button>
+                  {:else}
+                    <Pill
+                      status={u.approvalStatus === 'PENDING' ? 'PENDING_APPROVAL' : u.status}
+                      label={u.approvalStatus === 'PENDING' ? 'Pending verification' : undefined}
+                    />
+                  {/if}
                 </td>
               </tr>
+              {#if open}
+                <tr class="review-row" id="review-{u.id}">
+                  <td colspan="4">
+                    {#if u.review && u.review.passed.length + u.review.missing.length > 0}
+                      <p class="review-lede">
+                        {#if u.review.missing.length}
+                          The branch returned this listing because {u.review.missing.length === 1 ? 'one check is' : `${u.review.missing.length} checks are`} not met yet.
+                        {:else}
+                          The branch returned this listing. Every check passed; contact your branch office for details.
+                        {/if}
+                      </p>
+                      <ul class="review-checks">
+                        {#each u.review.missing as c (c)}
+                          <li class="missing"><Icon name="x" size={14} strokeWidth={2.25} /><s>{c}</s><span class="tag">Missing</span></li>
+                        {/each}
+                        {#each u.review.passed as c (c)}
+                          <li class="passed"><Icon name="check" size={14} strokeWidth={2.25} />{c}</li>
+                        {/each}
+                      </ul>
+                    {:else}
+                      <p class="review-lede">No check details were recorded for this return. Contact your branch office to find out what is needed.</p>
+                    {/if}
+                  </td>
+                </tr>
+              {/if}
             {/each}
           </tbody>
         </table>
@@ -229,6 +272,90 @@
 
   .rent {
     color: var(--ink-soft);
+  }
+
+  .review-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+  }
+
+  .review-toggle:hover {
+    color: var(--ink);
+  }
+
+  .review-toggle:focus-visible {
+    outline: 2px solid var(--moss);
+    outline-offset: 3px;
+    border-radius: 999px;
+  }
+
+  .chevron {
+    font-size: 12px;
+    line-height: 1;
+    transition: transform 0.15s ease;
+  }
+
+  .chevron.up {
+    transform: rotate(180deg);
+  }
+
+  .units tr.has-review td {
+    border-bottom-color: transparent;
+  }
+
+  .units .review-row td {
+    padding-block: 0 18px;
+  }
+
+  .review-lede {
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  .review-checks {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 10px 0 0;
+    padding: 12px 14px;
+    list-style: none;
+    background: var(--mist);
+    border-radius: 10px;
+  }
+
+  .review-checks li {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 13px;
+  }
+
+  .review-checks .missing {
+    color: var(--ink);
+  }
+
+  .review-checks .missing s {
+    text-decoration-thickness: 1.5px;
+    text-decoration-color: rgba(21, 65, 83, 0.55);
+  }
+
+  .review-checks .passed {
+    color: var(--moss-deep);
+  }
+
+  .tag {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
   }
 
   @media (max-width: 640px) {

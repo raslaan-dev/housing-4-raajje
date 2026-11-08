@@ -131,6 +131,8 @@ model Property {
   monthlyRent    Int
   status         String                  @default("PENDING_APPROVAL")
   approvalStatus String                  @default("PENDING")
+  /// JSON ReviewFeedback from the last time the branch returned this registration.
+  reviewFeedback String?
   isActive       Boolean                 @default(true)
   createdAt      DateTime                @default(now())
   updatedAt      DateTime                @updatedAt
@@ -189,6 +191,8 @@ model Application {
   property          Property         @relation(fields: [propertyId], references: [id])
   status            String           @default("PENDING")
   notes             String?
+  /// JSON ReviewFeedback from the last time the branch returned this application.
+  reviewFeedback    String?
   rejectionReasonId String?
   rejectionReason   RejectionReason? @relation(fields: [rejectionReasonId], references: [id])
   termMonths        Int?
