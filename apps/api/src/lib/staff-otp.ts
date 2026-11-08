@@ -8,7 +8,7 @@ const RESEND_COOLDOWN_MS = 60 * 1000;
 const MAX_ATTEMPTS = 5;
 
 function otpSecret() {
-  const secret = process.env.STAFF_OTP_SECRET;
+  const secret = process.env.RESEND_API_KEY;
   if (!secret || secret.length < 32) {
     throw new HttpError(503, 'Staff email verification is not configured.');
   }

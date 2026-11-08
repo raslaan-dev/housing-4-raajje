@@ -9,7 +9,7 @@ import { issueDemoSessionToken } from '../apps/api/src/lib/demo-session.js';
 
 const originalNodeEnv = process.env.NODE_ENV;
 const originalClerkSecretKey = process.env.CLERK_SECRET_KEY;
-const originalStaffOtpSecret = process.env.STAFF_OTP_SECRET;
+const originalResendApiKey = process.env.RESEND_API_KEY;
 
 function invokeAuth(headers: Request['headers']) {
   const req = { headers } as Request;
@@ -33,8 +33,8 @@ describe('requireAuth', () => {
     else process.env.NODE_ENV = originalNodeEnv;
     if (originalClerkSecretKey === undefined) delete process.env.CLERK_SECRET_KEY;
     else process.env.CLERK_SECRET_KEY = originalClerkSecretKey;
-    if (originalStaffOtpSecret === undefined) delete process.env.STAFF_OTP_SECRET;
-    else process.env.STAFF_OTP_SECRET = originalStaffOtpSecret;
+    if (originalResendApiKey === undefined) delete process.env.RESEND_API_KEY;
+    else process.env.RESEND_API_KEY = originalResendApiKey;
   });
 
   it('rejects an invalid bearer token without falling back to caller identity headers', async () => {
@@ -97,7 +97,7 @@ describe('requireAuth', () => {
 
   it('accepts signed preview demo sessions and rejects forged session tokens', async () => {
     process.env.NODE_ENV = 'preview';
-    process.env.STAFF_OTP_SECRET = 'preview-demo-session-secret-with-at-least-32-characters';
+    process.env.RESEND_API_KEY = 're_preview_demo_session_key_with_at_least_32_chars';
     const token = issueDemoSessionToken({
       id: 'verified-staff',
       email: 'staff@example.com',

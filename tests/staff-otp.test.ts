@@ -35,7 +35,6 @@ const originalEnv = {
   nodeEnv: process.env.NODE_ENV,
   demoLogin: process.env.DEMO_LOGIN,
   otpEmail: process.env.STAFF_OTP_EMAIL,
-  otpSecret: process.env.STAFF_OTP_SECRET,
   resendApiKey: process.env.RESEND_API_KEY,
   resendFrom: process.env.RESEND_FROM
 };
@@ -82,8 +81,7 @@ beforeEach(() => {
   process.env.NODE_ENV = 'development';
   process.env.DEMO_LOGIN = 'true';
   process.env.STAFF_OTP_EMAIL = 'staff-otp@example.com';
-  process.env.STAFF_OTP_SECRET = 'test-staff-otp-secret-that-is-at-least-32-characters';
-  process.env.RESEND_API_KEY = 're_123456789012345678901234';
+  process.env.RESEND_API_KEY = 're_test_staff_otp_key_that_is_at_least_32_chars';
   process.env.RESEND_FROM = 'Housing Test <no-reply@example.test>';
   challenge = null;
   vi.resetAllMocks();
@@ -120,8 +118,6 @@ afterEach(() => {
   else process.env.DEMO_LOGIN = originalEnv.demoLogin;
   if (originalEnv.otpEmail === undefined) delete process.env.STAFF_OTP_EMAIL;
   else process.env.STAFF_OTP_EMAIL = originalEnv.otpEmail;
-  if (originalEnv.otpSecret === undefined) delete process.env.STAFF_OTP_SECRET;
-  else process.env.STAFF_OTP_SECRET = originalEnv.otpSecret;
   if (originalEnv.resendApiKey === undefined) delete process.env.RESEND_API_KEY;
   else process.env.RESEND_API_KEY = originalEnv.resendApiKey;
   if (originalEnv.resendFrom === undefined) delete process.env.RESEND_FROM;

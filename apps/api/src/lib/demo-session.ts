@@ -22,7 +22,7 @@ type DemoSessionUser = {
 };
 
 function signingSecret() {
-  const secret = process.env.STAFF_OTP_SECRET;
+  const secret = process.env.RESEND_API_KEY;
   if (!secret || secret.length < 32) throw new HttpError(503, 'Preview sign-in is not configured.');
   return secret;
 }
